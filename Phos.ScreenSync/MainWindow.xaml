@@ -27,6 +27,6 @@
                     Click="StartStopCapture"
                     Width="200" Height="50" />
         </StackPanel>
-        <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="Hello World" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <Image x:Name="ScreenImage" Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="0" />
     </Grid>
 </Window>
