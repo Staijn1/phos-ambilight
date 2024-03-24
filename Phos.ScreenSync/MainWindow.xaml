@@ -6,15 +6,27 @@
         xmlns:local="clr-namespace:Phos.ScreenSync"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <DockPanel>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
         <ListBox x:Name="DisplayListBox"
-                 DockPanel.Dock="Top"
+                 Grid.Row="0"
+                 Grid.Column="0"
                  SelectionChanged="DisplayListBox_SelectionChanged"
                  DisplayMemberPath="DeviceName" />
-        <TextBlock x:Name="DisplayDetailsTextBlock" />
-        <Button Content="{Binding CaptureButtonText}"
-                IsEnabled="{Binding IsScreenSelected}"
-                Click="StartStopCapture"
-                Width="200" Height="50" />
-    </DockPanel>
+        <StackPanel Grid.Row="0" Grid.Column="1">
+            <TextBlock x:Name="DisplayDetailsTextBlock" />
+            <Button Content="{Binding CaptureButtonText}"
+                    IsEnabled="{Binding IsScreenSelected}"
+                    Click="StartStopCapture"
+                    Width="200" Height="50" />
+        </StackPanel>
+        <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="Hello World" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </Grid>
 </Window>

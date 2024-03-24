@@ -21,7 +21,7 @@ namespace Phos.ScreenSync;
 /// Interaction logic for MainWindow.xaml
 /// </summary>
 
-public partial class MainWindow : Window
+public partial class MainWindow : Window, INotifyPropertyChanged
 {
     private bool _isScreenSelected = false;
     private bool _isCapturing = false;
@@ -29,7 +29,7 @@ public partial class MainWindow : Window
     private PhosSocketIOClient _connection;
     private readonly PhosScreenCapture _screenCapture;
     
-    public event PropertyChangedEventHandler PropertyChanged;
+    public event PropertyChangedEventHandler? PropertyChanged;
     public string CaptureButtonText => _isCapturing ? "Stop Capture" : "Start Capture";
 
     
@@ -51,6 +51,8 @@ public partial class MainWindow : Window
 
         ConnectWebSocket();
         LoadDisplays();
+        
+        DataContext = this; // Set the DataContext
     }
 
     private void ConnectWebSocket()
@@ -74,8 +76,8 @@ public partial class MainWindow : Window
 
     public void DisplayListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        _selectedDisplay = (Display)DisplayListBox.SelectedItem;
-        IsScreenSelected = _selectedDisplay != null;
+        _selectedDisplay = (Display) DisplayListBox.SelectedItem;
+        IsScreenSelected = true;
         DisplayDetailsTextBlock.Text = $"Name: {_selectedDisplay.DeviceName}, Resolution: {_selectedDisplay.Width}x{_selectedDisplay.Height}";
     }
 
