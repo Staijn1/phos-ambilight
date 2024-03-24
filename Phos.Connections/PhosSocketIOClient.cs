@@ -2,11 +2,11 @@ namespace Phos.Connections;
 
 using global::SocketIOClient;
 
-public class SocketIOClient
+public class PhosSocketIOClient
 {
     private readonly SocketIO client;
 
-    public SocketIOClient(string serverUrl, SocketIOOptions options = null, bool autoConnect = true)
+    public PhosSocketIOClient(string serverUrl, SocketIOOptions options = null, bool autoConnect = true)
     {
         client = new SocketIO(serverUrl, options);
 

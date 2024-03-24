@@ -6,7 +6,15 @@
         xmlns:local="clr-namespace:Phos.ScreenSync"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
-
-    </Grid>
+    <DockPanel>
+        <ListBox x:Name="DisplayListBox"
+                 DockPanel.Dock="Top"
+                 SelectionChanged="DisplayListBox_SelectionChanged"
+                 DisplayMemberPath="DeviceName" />
+        <TextBlock x:Name="DisplayDetailsTextBlock" />
+        <Button Content="{Binding CaptureButtonText}"
+                IsEnabled="{Binding IsScreenSelected}"
+                Click="StartStopCapture"
+                Width="200" Height="50" />
+    </DockPanel>
 </Window>
