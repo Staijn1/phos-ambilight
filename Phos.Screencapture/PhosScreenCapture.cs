@@ -6,8 +6,8 @@ public class PhosScreenCapture
 {
     private DX11ScreenCaptureService _screenCaptureService = new DX11ScreenCaptureService();
     private IEnumerable<GraphicsCard> _graphicsCards;
-    private DX11ScreenCapture _screenCapture;
-    private CaptureZone<ColorBGRA> _captureZone;
+    private DX11ScreenCapture? _screenCapture;
+    private CaptureZone<ColorBGRA>? _captureZone;
 
     public PhosScreenCapture()
     {
@@ -38,48 +38,50 @@ public class PhosScreenCapture
     /// <param name="height"></param>
     public void CreateCaptureZone(int fromX, int fromY, int width, int height)
     {
+        if (_screenCapture == null) throw new Exception("No display selected");
+
         _captureZone = _screenCapture.RegisterCaptureZone(fromX, fromY, width, height);
     }
 
 
     public RefImage<ColorBGRA> GetImage()
     {
+        if (_captureZone == null) throw new Exception("No capture zone created");
+        if (_screenCapture == null) throw new Exception("No display selected");
+        
+        _screenCapture.CaptureScreen();
+        
         using (_captureZone.Lock())
         {
+            ReadOnlySpan<byte> rawData = _captureZone.RawBuffer;
             RefImage<ColorBGRA> image = _captureZone.Image;
+            
             return image;
         }
     }
 
     public ColorBGRA GetAverageColorInArea()
     {
-        var image = this.GetImage();
-        // long totalR = 0, totalG = 0, totalB = 0, totalA = 0;
-        // int pixelCount = image.Width * image.Height;
-        //
+        var image = GetImage();
+        long totalR = 0, totalG = 0, totalB = 0, totalA = 0;
+        int pixelCount = image.Width * image.Height;
+        
         for (int y = 0; y < image.Height; y++)
         {
             for (int x = 0; x < image.Width; x++)
             {
                 ColorBGRA pixel = image[x, y];
-                // totalR += pixel.R;
-                // totalG += pixel.G;
-                // totalB += pixel.B;
-                // totalA += pixel.A;
-
-                if (pixel.R != 0 || pixel.G != 0 || pixel.B != 0 || pixel.A != 0)
-                {
-                    Console.WriteLine("Pixel: " + ColorUtils.ColorRGBAToHex(pixel));
-                }
+                totalR += pixel.R;
+                totalG += pixel.G;
+                totalB += pixel.B;
             }
         }
-        //
-        // byte avgR = (byte)(totalR / pixelCount);
-        // byte avgG = (byte)(totalG / pixelCount);
-        // byte avgB = (byte)(totalB / pixelCount);
-        // byte avgA = (byte)(totalA / pixelCount);
+        
+        byte avgR = (byte)(totalR / pixelCount);
+        byte avgG = (byte)(totalG / pixelCount);
+        byte avgB = (byte)(totalB / pixelCount);
+        byte avgA = (byte)(totalA / pixelCount);
 
-        return image[10, 20];
-        // return new ColorBGRA(avgR, avgG, avgB, avgA);
+        return new ColorBGRA(avgB, avgG, avgR, avgA);
     }
 }

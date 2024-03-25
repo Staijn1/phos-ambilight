@@ -106,6 +106,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             Console.WriteLine("Capturing...");
             var averageColor = _screenCapture.GetAverageColorInArea();
+            
             // Log the average color hex
             Console.WriteLine(ColorUtils.ColorRGBAToHex(averageColor));
 
@@ -113,9 +114,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Dispatcher.Invoke(new Action(() =>
             {
                 // Convert the average color to a SolidColorBrush
-                var averageColorBrush = new SolidColorBrush(Color.FromArgb(averageColor.A, averageColor.R, averageColor.G, averageColor.B));
+                var averageColorBrush = new SolidColorBrush(Color.FromRgb(averageColor.R, averageColor.G, averageColor.B));
 
-                this.Background = averageColorBrush;
+                Background = averageColorBrush;
             }));
 
             // Introduce a delay
