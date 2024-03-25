@@ -1,4 +1,6 @@
-﻿using ScreenCapture.NET;
+﻿using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using ScreenCapture.NET;
 
 namespace Phos.Screencapture;
 
@@ -53,7 +55,6 @@ public class PhosScreenCapture
         
         using (_captureZone.Lock())
         {
-            ReadOnlySpan<byte> rawData = _captureZone.RawBuffer;
             RefImage<ColorBGRA> image = _captureZone.Image;
             
             return image;
@@ -65,7 +66,7 @@ public class PhosScreenCapture
         var image = GetImage();
         long totalR = 0, totalG = 0, totalB = 0, totalA = 0;
         int pixelCount = image.Width * image.Height;
-        
+
         for (int y = 0; y < image.Height; y++)
         {
             for (int x = 0; x < image.Width; x++)
@@ -76,12 +77,41 @@ public class PhosScreenCapture
                 totalB += pixel.B;
             }
         }
-        
+
         byte avgR = (byte)(totalR / pixelCount);
         byte avgG = (byte)(totalG / pixelCount);
         byte avgB = (byte)(totalB / pixelCount);
         byte avgA = (byte)(totalA / pixelCount);
 
         return new ColorBGRA(avgB, avgG, avgR, avgA);
+    }
+
+    public BitmapSource GetImageAsBitmap()
+    {
+        var rawData = this.GetRawData();
+        return BitmapSource.Create(
+            _captureZone.Width,
+            _captureZone.Height,
+            96,
+            96,
+            PixelFormats.Bgra32,
+            null,
+            rawData.ToArray(),
+            _captureZone.Stride
+        );
+    }
+
+    private ReadOnlySpan<byte> GetRawData()
+    {
+        if (_captureZone == null) throw new Exception("No capture zone created");
+        if (_screenCapture == null) throw new Exception("No display selected");
+
+        _screenCapture.CaptureScreen();
+
+        using (_captureZone.Lock())
+        {
+            ReadOnlySpan<byte> rawData = _captureZone.RawBuffer;
+            return rawData;
+        }
     }
 }

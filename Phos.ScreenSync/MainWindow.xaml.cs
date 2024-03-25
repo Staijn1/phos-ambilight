@@ -2,9 +2,6 @@
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Threading;
 using Phos.Connections;
 using Phos.Screencapture;
 using ScreenCapture.NET;
@@ -100,27 +97,20 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         OnPropertyChanged(nameof(CaptureButtonText));
     }
 
-    private async void StartScreenCapture()
+    private void StartScreenCapture()
     {
         while (_isCapturing)
         {
             Console.WriteLine("Capturing...");
             var averageColor = _screenCapture.GetAverageColorInArea();
             
-            // Log the average color hex
             Console.WriteLine(ColorUtils.ColorRGBAToHex(averageColor));
-
-            // Update the Background property of the window on the UI thread
+            
+            // Update the Image control on the UI thread
             Dispatcher.Invoke(new Action(() =>
             {
-                // Convert the average color to a SolidColorBrush
-                var averageColorBrush = new SolidColorBrush(Color.FromRgb(averageColor.R, averageColor.G, averageColor.B));
-
-                Background = averageColorBrush;
+                ScreenImage.Source = _screenCapture.GetImageAsBitmap();
             }));
-
-            // Introduce a delay
-            await Task.Delay(100); // 100 milliseconds delay
         }
     }
 
