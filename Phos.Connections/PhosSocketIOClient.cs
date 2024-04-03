@@ -1,23 +1,16 @@
-using System.Text.Json;
-using SocketIO.Serializer.SystemTextJson;
+using SocketIOClient;
 
 namespace Phos.Connections;
 
-using global::SocketIOClient;
-
 public class PhosSocketIOClient
 {
-    protected readonly SocketIO client;
+    protected readonly SocketIOClient.SocketIO client;
     public event EventHandler OnConnect;
     public EventHandler<SocketIOResponse> OnDatabaseChange;
 
     public PhosSocketIOClient(string serverUrl, SocketIOOptions options = null, bool autoConnect = true)
     {
-        client = new SocketIO(serverUrl, options);
-        client.Serializer = new SystemTextJsonSerializer(new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
+        client = new SocketIOClient.SocketIO(serverUrl, options);
 
         if (autoConnect)
         {
@@ -72,4 +65,5 @@ public static class PhosSocketMessage
     public static readonly string DatabaseChange = "databaseChange";
     public static readonly string RegisterAsUser = "joinUserRoom";
     public static readonly string SetNetworkState = "setState";
+    public static readonly string SetNetworkStateRaw = "setNetworkStateRaw";
 }
