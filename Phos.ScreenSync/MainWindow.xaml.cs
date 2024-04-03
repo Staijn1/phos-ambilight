@@ -26,15 +26,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
     public string CaptureButtonText => _isCapturing ? "Stop Capture" : "Start Capture";
 
-
-    public bool IsScreenSelected
+    public bool CanStartCapture
     {
-        get => _isScreenSelected;
-        set
-        {
-            _isScreenSelected = value;
-            OnPropertyChanged();
-        }
+        get => _selectedDisplay != null && SelectedRooms != null && SelectedRooms.Count > 0;
     }
 
 
@@ -97,7 +91,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public void DisplayListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         _selectedDisplay = (Display)AvailableDisplayListBox.SelectedItem;
-        IsScreenSelected = true;
         DisplayDetailsTextBlock.Text =
             $"Name: {_selectedDisplay.DeviceName}, Resolution: {_selectedDisplay.Width}x{_selectedDisplay.Height}";
         _screenCapture.SelectDisplay(_selectedDisplay);
@@ -127,6 +120,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void StartScreenCapture()
     {
+        this._connection.SendEvent(PhosSocketMessage.SetNetworkState);
         while (_isCapturing)
         {
             Console.WriteLine("Capturing...");
@@ -148,6 +142,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         var selectedRooms = AvailableRoomsListBox.SelectedItems.Cast<Room>().ToList();
         SelectedRooms = selectedRooms.Select(room => room.Id).ToList();
+        OnPropertyChanged(nameof(CanStartCapture));
     }
 
 }

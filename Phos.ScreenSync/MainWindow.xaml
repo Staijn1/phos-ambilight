@@ -34,10 +34,10 @@
         <StackPanel Grid.Row="0" Grid.Column="2">
             <TextBlock x:Name="DisplayDetailsTextBlock" />
             <Button Content="{Binding CaptureButtonText}"
-                    IsEnabled="{Binding IsScreenSelected}"
+                    IsEnabled="{Binding CanStartCapture}"
                     Click="StartStopCapture"
                     Width="200" Height="50" />
         </StackPanel>
-        <Image x:Name="ScreenImage" Grid.Row="1" Grid.ColumnSpan="2" />
+        <Image x:Name="ScreenImage" Grid.Row="1" Grid.ColumnSpan="3" />
     </Grid>
 </Window>

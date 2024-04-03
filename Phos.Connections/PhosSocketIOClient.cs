@@ -18,7 +18,7 @@ public class PhosSocketIOClient
         {
             PropertyNameCaseInsensitive = true
         });
-        
+
         if (autoConnect)
         {
             Connect();
@@ -27,7 +27,6 @@ public class PhosSocketIOClient
         client.OnConnected += this.OnConnected;
         client.On(PhosSocketMessage.DatabaseChange, async response => this.OnDatabaseChange.Invoke(this, response));
     }
-
 
 
     public virtual void OnConnected(object? sender, EventArgs e)
@@ -61,10 +60,7 @@ public class PhosSocketIOClient
 
         var tcs = new TaskCompletionSource<SocketIOResponse>();
 
-        client.EmitAsync(eventName, response =>
-        {
-            tcs.SetResult(response);
-        }, data);
+        client.EmitAsync(eventName, response => { tcs.SetResult(response); }, data);
 
         return tcs.Task;
     }
@@ -75,4 +71,5 @@ public static class PhosSocketMessage
     public static readonly string GetNetworkState = "getNetworkState";
     public static readonly string DatabaseChange = "databaseChange";
     public static readonly string RegisterAsUser = "joinUserRoom";
+    public static readonly string SetNetworkState = "setState";
 }
