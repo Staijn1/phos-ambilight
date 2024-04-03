@@ -21,7 +21,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private Display _selectedDisplay;
     private PhosSocketIOClient _connection;
     private readonly PhosScreenCapture _screenCapture;
-    private List<string> SelectedRooms { get; set; }
+    private Task? screenCaptureThread;
+    private List<Room> SelectedRooms { get; set; }
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public string CaptureButtonText => _isCapturing ? "Stop Capture" : "Start Capture";
@@ -63,12 +64,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var response = await _connection.SendEvent(PhosSocketMessage.GetNetworkState);
 
             var networkState = response.GetValue<NetworkState>();
-            this.OnNewNetworkState(networkState);
+            OnNewNetworkState(networkState);
         };
-        _connection.OnDatabaseChange += (sender, response) =>
-        {
-            Console.WriteLine("Database change event received");
-        };
+        _connection.OnDatabaseChange += (sender, response) => { Console.WriteLine("Database change event received"); };
     }
 
     /// <summary>
@@ -77,10 +75,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     /// <param name="networkState"></param>
     private void OnNewNetworkState(NetworkState networkState)
     {
-        Dispatcher.Invoke(() =>
-        {
-            AvailableRoomsListBox.ItemsSource = networkState.Rooms;
-        });
+        Dispatcher.Invoke(() => { AvailableRoomsListBox.ItemsSource = networkState.Rooms; });
     }
 
     private void LoadDisplays()
@@ -102,6 +97,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             // Stop capturing
             _isCapturing = false;
+            // Stop capture thread
+            screenCaptureThread?.Wait();
             Console.WriteLine("Stopped capturing.");
         }
         else
@@ -112,22 +109,36 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             _screenCapture.CreateCaptureZone(0, 0, _selectedDisplay.Width, _selectedDisplay.Height);
             // Start the screen capture on a new thread
-            Task.Run(StartScreenCapture);
+            screenCaptureThread = Task.Run(StartScreenCapture);
         }
 
         OnPropertyChanged(nameof(CaptureButtonText));
     }
 
-    private void StartScreenCapture()
+    private async void StartScreenCapture()
     {
-        this._connection.SendEvent(PhosSocketMessage.SetNetworkState);
+        var colors = new List<string> { "#ff0000", "#000000", "#000000" };
+        // Set the mode for all rooms to the visualizer mode with FFT 255 (max)
+        var newState = new State
+        {
+            Mode = 72,
+            Colors = colors,
+            Brightness = 255,
+            Speed = 2000
+        };
+        await _connection.SendEvent(PhosSocketMessage.SetFFTValue, SelectedRooms.Select(r => r.Id).ToList(), 255);
+        await _connection.SendEvent(PhosSocketMessage.SetNetworkState, SelectedRooms.Select(r => r.Id).ToList(), newState);
+
+
         while (_isCapturing)
         {
             Console.WriteLine("Capturing...");
             var averageColor = _screenCapture.GetAverageColorInArea();
-            
-            Console.WriteLine(ColorUtils.ColorRGBAToHex(averageColor));
-            
+
+            colors[0] = ColorUtils.ColorRGBToHex(averageColor);
+            newState.Colors = colors;
+            await _connection.SendEvent(PhosSocketMessage.SetNetworkStateRaw, SelectedRooms.Select(r => r.Id).ToList(), newState);
+
             // Update the Image control on the UI thread
             Dispatcher.Invoke(new Action(() => { ScreenImage.Source = _screenCapture.GetImageAsBitmap(); }));
         }
@@ -141,8 +152,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void RoomListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         var selectedRooms = AvailableRoomsListBox.SelectedItems.Cast<Room>().ToList();
-        SelectedRooms = selectedRooms.Select(room => room.Id).ToList();
+        SelectedRooms = selectedRooms.ToList();
         OnPropertyChanged(nameof(CanStartCapture));
     }
-
 }

@@ -61,7 +61,7 @@ public class PhosScreenCapture
         }
     }
 
-    public ColorBGRA GetAverageColorInArea()
+    public ColorRGB GetAverageColorInArea()
     {
         var image = GetImage();
         long totalR = 0, totalG = 0, totalB = 0, totalA = 0;
@@ -83,7 +83,7 @@ public class PhosScreenCapture
         byte avgB = (byte)(totalB / pixelCount);
         byte avgA = (byte)(totalA / pixelCount);
 
-        return new ColorBGRA(avgB, avgG, avgR, avgA);
+        return new ColorRGB(avgR, avgG, avgB);
     }
 
     public BitmapSource GetImageAsBitmap()
