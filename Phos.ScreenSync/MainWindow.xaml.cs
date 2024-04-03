@@ -16,6 +16,7 @@ namespace Phos.ScreenSync;
 /// </summary>
 public partial class MainWindow : Window, INotifyPropertyChanged
 {
+    private bool HasCustomAreaSelected { get; set; } = false;
     private bool _isScreenSelected = false;
     private bool _isCapturing = false;
     private Display _selectedDisplay;
@@ -106,13 +107,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             // Start capturing
             _isCapturing = true;
 
-            _screenCapture.CreateCaptureZone(0, 0, _selectedDisplay.Width, _selectedDisplay.Height);
+            if (!HasCustomAreaSelected)
+            {
+               _screenCapture.CreateCaptureZone(0, 0, _selectedDisplay.Width, _selectedDisplay.Height);
+               
+            }
             // Start the screen capture on a new thread
             screenCaptureThread = Task.Run(StartScreenCapture);
         }
 
         OnPropertyChanged(nameof(CaptureButtonText));
     }
+
 
     private async void StartScreenCapture()
     {
@@ -164,6 +170,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             _screenCapture.CreateCaptureZone(x, y, w, h);
             overlayWindow.Close();
+            HasCustomAreaSelected = true;
         };
         overlayWindow.Topmost = true; // Ensure the overlay window is always on top
         overlayWindow.Show();
