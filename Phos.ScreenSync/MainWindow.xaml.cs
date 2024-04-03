@@ -59,16 +59,28 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 new("deviceName", deviceName),
             }
         });
+
+        _connection.OnConnect += async (sender, args) =>
+        {
+            // First register ourselves as a user
+            await _connection.SendEvent(PhosSocketMessage.RegisterAsUser);
+            var bla = await _connection.SendEvent(PhosSocketMessage.GetNetworkState);
+            Console.WriteLine(" test");
+        };
+        _connection.OnDatabaseChange += (sender, response) =>
+        {
+            Console.WriteLine("Database change event received");
+        };
     }
 
     private void LoadDisplays()
     {
-        DisplayListBox.ItemsSource = _screenCapture.GetDisplays();
+        AvailableDisplayListBox.ItemsSource = _screenCapture.GetDisplays();
     }
 
     public void DisplayListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        _selectedDisplay = (Display)DisplayListBox.SelectedItem;
+        _selectedDisplay = (Display)AvailableDisplayListBox.SelectedItem;
         IsScreenSelected = true;
         DisplayDetailsTextBlock.Text =
             $"Name: {_selectedDisplay.DeviceName}, Resolution: {_selectedDisplay.Width}x{_selectedDisplay.Height}";
@@ -107,15 +119,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Console.WriteLine(ColorUtils.ColorRGBAToHex(averageColor));
             
             // Update the Image control on the UI thread
-            Dispatcher.Invoke(new Action(() =>
-            {
-                ScreenImage.Source = _screenCapture.GetImageAsBitmap();
-            }));
+            Dispatcher.Invoke(new Action(() => { ScreenImage.Source = _screenCapture.GetImageAsBitmap(); }));
         }
     }
 
     protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    private void RoomListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        throw new NotImplementedException();
     }
 }

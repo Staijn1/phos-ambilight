@@ -8,19 +8,29 @@
         Title="MainWindow" Height="450" Width="800">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <ListBox x:Name="DisplayListBox"
-                 Grid.Row="0"
-                 Grid.Column="0"
-                 SelectionChanged="DisplayListBox_SelectionChanged"
-                 DisplayMemberPath="DeviceName" />
-        <StackPanel Grid.Row="0" Grid.Column="1">
+        <ListBox
+            x:Name="AvailableDisplayListBox"
+            Grid.Row="0"
+            Grid.Column="0"
+            SelectionChanged="DisplayListBox_SelectionChanged"
+            DisplayMemberPath="DeviceName" 
+        />
+        <ListBox
+            x:Name="AvailableRoomsListBox"
+            Grid.Row="0"
+            Grid.Column="1"
+            SelectionChanged="RoomListBox_SelectionChanged"
+            DisplayMemberPath="DeviceName" 
+        />
+        <StackPanel Grid.Row="0" Grid.Column="2">
             <TextBlock x:Name="DisplayDetailsTextBlock" />
             <Button Content="{Binding CaptureButtonText}"
                     IsEnabled="{Binding IsScreenSelected}"
