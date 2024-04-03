@@ -143,7 +143,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             colors[0] = ColorUtils.ColorRGBToHex(averageColor);
             newState.Colors = colors;
-            await _connection.SendEvent(PhosSocketMessage.SetNetworkStateRaw, SelectedRooms.Select(r => r.Id).ToList(),
+            await _connection.SendEvent(PhosSocketMessage.SetNetworkState, SelectedRooms.Select(r => r.Id).ToList(),
                 newState);
 
             // Update the Image control on the UI thread
