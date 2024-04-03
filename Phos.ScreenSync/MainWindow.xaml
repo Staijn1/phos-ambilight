@@ -28,7 +28,8 @@
             Grid.Row="0"
             Grid.Column="1"
             SelectionChanged="RoomListBox_SelectionChanged"
-            DisplayMemberPath="DeviceName" 
+            DisplayMemberPath="Name" 
+            SelectionMode="Extended"
         />
         <StackPanel Grid.Row="0" Grid.Column="2">
             <TextBlock x:Name="DisplayDetailsTextBlock" />

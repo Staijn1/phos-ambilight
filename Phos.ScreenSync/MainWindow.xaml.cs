@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using Phos.Connections;
+using Phos.Data;
 using Phos.Screencapture;
 using ScreenCapture.NET;
 using SocketIOClient;
@@ -20,6 +21,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private Display _selectedDisplay;
     private PhosSocketIOClient _connection;
     private readonly PhosScreenCapture _screenCapture;
+    private List<string> SelectedRooms { get; set; }
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public string CaptureButtonText => _isCapturing ? "Stop Capture" : "Start Capture";
@@ -64,13 +66,27 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             // First register ourselves as a user
             await _connection.SendEvent(PhosSocketMessage.RegisterAsUser);
-            var bla = await _connection.SendEvent(PhosSocketMessage.GetNetworkState);
-            Console.WriteLine(" test");
+            var response = await _connection.SendEvent(PhosSocketMessage.GetNetworkState);
+
+            var networkState = response.GetValue<NetworkState>();
+            this.OnNewNetworkState(networkState);
         };
         _connection.OnDatabaseChange += (sender, response) =>
         {
             Console.WriteLine("Database change event received");
         };
+    }
+
+    /// <summary>
+    /// Display the new network state on screen
+    /// </summary>
+    /// <param name="networkState"></param>
+    private void OnNewNetworkState(NetworkState networkState)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            AvailableRoomsListBox.ItemsSource = networkState.Rooms;
+        });
     }
 
     private void LoadDisplays()
@@ -130,6 +146,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void RoomListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        throw new NotImplementedException();
+        var selectedRooms = AvailableRoomsListBox.SelectedItems.Cast<Room>().ToList();
+        SelectedRooms = selectedRooms.Select(room => room.Id).ToList();
     }
+
 }
