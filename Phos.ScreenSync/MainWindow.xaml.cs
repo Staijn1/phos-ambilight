@@ -86,8 +86,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public void DisplayListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         _selectedDisplay = (Display)AvailableDisplayListBox.SelectedItem;
-        DisplayDetailsTextBlock.Text =
-            $"Name: {_selectedDisplay.DeviceName}, Resolution: {_selectedDisplay.Width}x{_selectedDisplay.Height}";
+        DisplayDetailsTextBlock.Text = $"Name: {_selectedDisplay.DeviceName}, Resolution: {_selectedDisplay.Width}x{_selectedDisplay.Height}";
         _screenCapture.SelectDisplay(_selectedDisplay);
     }
 

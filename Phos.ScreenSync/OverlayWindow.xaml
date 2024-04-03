@@ -3,6 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         WindowStyle="None"
         AllowsTransparency="True">
+    <Window.Background>
+        <SolidColorBrush Opacity="0.5" Color="Black" />
+    </Window.Background>
     <Canvas
         x:Name="OverlayCanvas" Background="#00ff0099"
         MouseLeftButtonDown="Canvas_MouseLeftButtonDown"
