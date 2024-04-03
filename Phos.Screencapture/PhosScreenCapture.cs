@@ -42,6 +42,12 @@ public class PhosScreenCapture
     {
         if (_screenCapture == null) throw new Exception("No display selected");
 
+        // Remove old capture zone
+        if (_captureZone != null)
+        {
+            _screenCapture.UnregisterCaptureZone(_captureZone);
+        }
+        
         _captureZone = _screenCapture.RegisterCaptureZone(fromX, fromY, width, height);
     }
 

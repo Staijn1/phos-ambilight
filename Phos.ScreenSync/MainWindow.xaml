@@ -33,6 +33,9 @@
         />
         <StackPanel Grid.Row="0" Grid.Column="2">
             <TextBlock x:Name="DisplayDetailsTextBlock" />
+            <Button Content="Select Area"
+                    Click="SelectArea"
+                    Width="200" Height="50" />
             <Button Content="{Binding CaptureButtonText}"
                     IsEnabled="{Binding CanStartCapture}"
                     Click="StartStopCapture"

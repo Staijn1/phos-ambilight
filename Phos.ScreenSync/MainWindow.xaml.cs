@@ -127,7 +127,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Speed = 2000
         };
         await _connection.SendEvent(PhosSocketMessage.SetFFTValue, SelectedRooms.Select(r => r.Id).ToList(), 255);
-        await _connection.SendEvent(PhosSocketMessage.SetNetworkState, SelectedRooms.Select(r => r.Id).ToList(), newState);
+        await _connection.SendEvent(PhosSocketMessage.SetNetworkState, SelectedRooms.Select(r => r.Id).ToList(),
+            newState);
 
 
         while (_isCapturing)
@@ -137,7 +138,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             colors[0] = ColorUtils.ColorRGBToHex(averageColor);
             newState.Colors = colors;
-            await _connection.SendEvent(PhosSocketMessage.SetNetworkStateRaw, SelectedRooms.Select(r => r.Id).ToList(), newState);
+            await _connection.SendEvent(PhosSocketMessage.SetNetworkStateRaw, SelectedRooms.Select(r => r.Id).ToList(),
+                newState);
 
             // Update the Image control on the UI thread
             Dispatcher.Invoke(new Action(() => { ScreenImage.Source = _screenCapture.GetImageAsBitmap(); }));
@@ -154,5 +156,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var selectedRooms = AvailableRoomsListBox.SelectedItems.Cast<Room>().ToList();
         SelectedRooms = selectedRooms.ToList();
         OnPropertyChanged(nameof(CanStartCapture));
+    }
+
+    public void SelectArea(object sender, RoutedEventArgs e)
+    {
+        var overlayWindow = new OverlayWindow();
+        overlayWindow.AreaSelected += (x, y, w, h) =>
+        {
+            _screenCapture.CreateCaptureZone(x, y, w, h);
+            overlayWindow.Close();
+        };
+        overlayWindow.Topmost = true; // Ensure the overlay window is always on top
+        overlayWindow.Show();
     }
 }
