@@ -172,7 +172,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             overlayWindow.Close();
             HasCustomAreaSelected = true;
         };
-        overlayWindow.Topmost = true; // Ensure the overlay window is always on top
         overlayWindow.Show();
     }
 }
