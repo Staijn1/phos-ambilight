@@ -41,6 +41,12 @@ public class PhosSocketIOClient
     /// <param name="payload"></param>
     public Task<SocketIOResponse> SendEvent(string eventName, List<string> rooms = null, object payload = null)
     {
+        if (!client.Connected)
+        {
+            Console.WriteLine("Warning: attempting to send event while not connected to server!");
+            return Task.FromResult<SocketIOResponse>(null);
+        }
+        
         object data = null;
         if (rooms != null || payload != null)
         {
