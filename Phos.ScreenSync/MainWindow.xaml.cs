@@ -99,6 +99,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _isCapturing = false;
             // Stop capture thread
             screenCaptureThread?.Wait();
+            screenCaptureThread = null;
             Console.WriteLine("Stopped capturing.");
         }
         else
