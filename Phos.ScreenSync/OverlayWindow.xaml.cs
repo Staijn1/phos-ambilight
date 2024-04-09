@@ -15,6 +15,7 @@ namespace Phos.ScreenSync
             InitializeComponent();
             WindowState = WindowState.Maximized;
             Topmost = true;
+            KeyDown += OverlayWindow_KeyDown;
         }
 
         private void Canvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -51,6 +52,14 @@ namespace Phos.ScreenSync
             var h = (int)SelectionRectangle.Height;
             
             AreaSelected?.Invoke(x, y, w, h);
+        }
+        
+        private void OverlayWindow_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                Close();
+            }
         }
     }
 }

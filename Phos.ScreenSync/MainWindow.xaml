@@ -38,7 +38,7 @@
                     Width="200" Height="50" />
             <Button Content="{Binding CaptureButtonText}"
                     IsEnabled="{Binding CanStartCapture}"
-                    Click="StartStopCapture"
+                    Click="ToggleScreenCapture"
                     Width="200" Height="50" />
         </StackPanel>
         <Image x:Name="ScreenImage" Grid.Row="1" Grid.ColumnSpan="3" />

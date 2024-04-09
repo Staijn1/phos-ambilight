@@ -30,7 +30,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public bool CanStartCapture
     {
-        get => _selectedDisplay != null && SelectedRooms != null && SelectedRooms.Count > 0;
+        get => _selectedDisplay != null && (SelectedRooms == null || SelectedRooms?.Count > 0);
     }
 
 
@@ -91,7 +91,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _screenCapture.SelectDisplay(_selectedDisplay);
     }
 
-    public void StartStopCapture(object sender, RoutedEventArgs e)
+    public void ToggleScreenCapture(object sender, RoutedEventArgs e)
     {
         if (_isCapturing)
         {
