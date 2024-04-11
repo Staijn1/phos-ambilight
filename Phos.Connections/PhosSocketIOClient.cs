@@ -6,7 +6,9 @@ public class PhosSocketIOClient
 {
     protected readonly SocketIOClient.SocketIO client;
     public event EventHandler OnConnect;
+    public event EventHandler OnDisconnect;
     public EventHandler<SocketIOResponse> OnDatabaseChange;
+    public bool IsConnected => client.Connected;
 
     public PhosSocketIOClient(string serverUrl, SocketIOOptions options = null, bool autoConnect = true)
     {
@@ -18,8 +20,10 @@ public class PhosSocketIOClient
         }
 
         client.OnConnected += this.OnConnected;
-        client.On(PhosSocketMessage.DatabaseChange, async response => this.OnDatabaseChange.Invoke(this, response));
+        client.OnDisconnected += (sender, args) => OnDisconnect.Invoke(this, EventArgs.Empty);
+        client.On(PhosSocketMessage.DatabaseChange, async response => OnDatabaseChange.Invoke(this, response));
     }
+
 
 
     public virtual void OnConnected(object? sender, EventArgs e)

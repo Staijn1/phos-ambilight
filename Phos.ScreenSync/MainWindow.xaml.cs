@@ -23,6 +23,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private PhosSocketIOClient _connection;
     private readonly PhosScreenCapture _screenCapture;
     private Task? screenCaptureThread;
+    private readonly SettingsManager<UserSettings> _settingsManager;
+
     private List<Room> SelectedRooms { get; set; }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -39,15 +41,25 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         InitializeComponent();
         _screenCapture = screenCapture;
 
+        _settingsManager = new SettingsManager<UserSettings>("userSettings.json");
+
+        // Load the WebSocket URL from the settings
+        var settings = _settingsManager.LoadSettings();
+        WebSocketInput.Text = settings?.WebSocketUrl ?? string.Empty;
+        
         LoadDisplays();
 
-        DataContext = this; // Set the DataContext
+        DataContext = this;
     }
 
     private void ConnectWebSocket(object o, RoutedEventArgs routedEventArgs)
     {
         var deviceName = "Phos Screensync - " + Environment.MachineName;
         var url = WebSocketInput.Text;
+        // Save the WebSocket URL to the settings
+        var settings = new UserSettings { WebSocketUrl = url };
+        _settingsManager.SaveSettings(settings);
+        
         _connection = new PhosSocketIOClient(url, new SocketIOOptions
         {
             Transport = TransportProtocol.WebSocket,
@@ -86,7 +98,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public void DisplayListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         _selectedDisplay = (Display)AvailableDisplayListBox.SelectedItem;
-        DisplayScreenDetailsTextBlock.Text = $"Name: {_selectedDisplay.DeviceName}, Resolution: {_selectedDisplay.Width}x{_selectedDisplay.Height}";
         _screenCapture.SelectDisplay(_selectedDisplay);
     }
 
