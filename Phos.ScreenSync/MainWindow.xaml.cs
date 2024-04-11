@@ -25,14 +25,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private Task? screenCaptureThread;
     private readonly SettingsManager<UserSettings> _settingsManager;
 
-    private List<Room> SelectedRooms { get; set; }
+    private List<Room> SelectedRooms { get; set; } = [];
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public string CaptureButtonText => _isCapturing ? "Stop Capture" : "Start Capture";
 
     public bool CanStartCapture
     {
-        get => _selectedDisplay != null && (SelectedRooms == null || SelectedRooms?.Count > 0);
+        get => _selectedDisplay != null && SelectedRooms?.Count > 0;
     }
 
 
