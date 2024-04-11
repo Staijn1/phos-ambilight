@@ -46,7 +46,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         // Load the WebSocket URL from the settings
         var settings = _settingsManager.LoadSettings();
         WebSocketInput.Text = settings?.WebSocketUrl ?? string.Empty;
-        
+
         LoadDisplays();
 
         DataContext = this;
@@ -59,7 +59,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         // Save the WebSocket URL to the settings
         var settings = new UserSettings { WebSocketUrl = url };
         _settingsManager.SaveSettings(settings);
-        
+
         _connection = new PhosSocketIOClient(url, new SocketIOOptions
         {
             Transport = TransportProtocol.WebSocket,
@@ -120,9 +120,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             if (!HasCustomAreaSelected)
             {
-               _screenCapture.CreateCaptureZone(0, 0, _selectedDisplay.Width, _selectedDisplay.Height);
-               
+                _screenCapture.CreateCaptureZone(0, 0, _selectedDisplay.Width, _selectedDisplay.Height);
             }
+
             // Start the screen capture on a new thread
             screenCaptureThread = Task.Run(StartScreenCapture);
         }
@@ -133,7 +133,27 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private async void StartScreenCapture()
     {
-        var colors = new List<string> { "#ff0000", "#000000", "#000000" };
+        var newState = await PrepareSelectedRoomsForScreenSync();
+
+
+        while (_isCapturing)
+        {
+            Console.WriteLine("Capturing...");
+            var averageColor = _screenCapture.GetAverageColorInArea();
+            var colors = newState.Colors;
+            colors[0] = ColorUtils.ColorRGBToHex(averageColor);
+            newState.Colors = colors;
+            await _connection.SendEvent(PhosSocketMessage.SetNetworkState, SelectedRooms.Select(r => r.Id).ToList(),
+                newState);
+
+            // Update the Image control on the UI thread
+            Dispatcher.Invoke(new Action(() => { ScreenImage.Source = _screenCapture.GetImageAsBitmap(); }));
+        }
+    }
+
+    private async Task<State> PrepareSelectedRoomsForScreenSync()
+    {
+        var colors = new List<string> { "#000000", "#000000", "#000000" };
         // Set the mode for all rooms to the visualizer mode with FFT 255 (max)
         var newState = new State
         {
@@ -145,21 +165,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         await _connection.SendEvent(PhosSocketMessage.SetFFTValue, SelectedRooms.Select(r => r.Id).ToList(), 255);
         await _connection.SendEvent(PhosSocketMessage.SetNetworkState, SelectedRooms.Select(r => r.Id).ToList(),
             newState);
-
-
-        while (_isCapturing)
-        {
-            Console.WriteLine("Capturing...");
-            var averageColor = _screenCapture.GetAverageColorInArea();
-
-            colors[0] = ColorUtils.ColorRGBToHex(averageColor);
-            newState.Colors = colors;
-            await _connection.SendEvent(PhosSocketMessage.SetNetworkState, SelectedRooms.Select(r => r.Id).ToList(),
-                newState);
-
-            // Update the Image control on the UI thread
-            Dispatcher.Invoke(new Action(() => { ScreenImage.Source = _screenCapture.GetImageAsBitmap(); }));
-        }
+        return newState;
     }
 
     protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
@@ -171,6 +177,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         var selectedRooms = AvailableRoomsListBox.SelectedItems.Cast<Room>().ToList();
         SelectedRooms = selectedRooms.ToList();
+        _ = PrepareSelectedRoomsForScreenSync();
         OnPropertyChanged(nameof(CanStartCapture));
     }
 
