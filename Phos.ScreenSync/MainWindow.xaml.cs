@@ -39,16 +39,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         InitializeComponent();
         _screenCapture = screenCapture;
 
-        ConnectWebSocket();
         LoadDisplays();
 
         DataContext = this; // Set the DataContext
     }
 
-    private void ConnectWebSocket()
+    private void ConnectWebSocket(object o, RoutedEventArgs routedEventArgs)
     {
         var deviceName = "Phos Screensync - " + Environment.MachineName;
-        var url = "ws://api.phos.steinjonker.nl";
+        var url = WebSocketInput.Text;
         _connection = new PhosSocketIOClient(url, new SocketIOOptions
         {
             Transport = TransportProtocol.WebSocket,
@@ -87,7 +86,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public void DisplayListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         _selectedDisplay = (Display)AvailableDisplayListBox.SelectedItem;
-        DisplayDetailsTextBlock.Text = $"Name: {_selectedDisplay.DeviceName}, Resolution: {_selectedDisplay.Width}x{_selectedDisplay.Height}";
+        DisplayScreenDetailsTextBlock.Text = $"Name: {_selectedDisplay.DeviceName}, Resolution: {_selectedDisplay.Width}x{_selectedDisplay.Height}";
         _screenCapture.SelectDisplay(_selectedDisplay);
     }
 

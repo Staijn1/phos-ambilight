@@ -32,7 +32,9 @@
             SelectionMode="Extended"
         />
         <StackPanel Grid.Row="0" Grid.Column="2">
-            <TextBlock x:Name="DisplayDetailsTextBlock" />
+            <TextBlock x:Name="DisplayScreenDetailsTextBlock" />
+            <TextBox x:Name="WebSocketInput" Width="200" Height="30" Text="ws://api.phos.steinjonker.nl" />
+            <Button Content="Connect" Click="ConnectWebSocket" Width="200" Height="30" />
             <Button Content="Select Area"
                     Click="SelectArea"
                     Width="200" Height="50" />
