@@ -6,37 +6,44 @@
         xmlns:local="clr-namespace:Phos.ScreenSync"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" MaxHeight="200" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-        <ListBox
-            x:Name="AvailableDisplayListBox"
-            Grid.Row="0"
-            Grid.Column="0"
-            SelectionChanged="DisplayListBox_SelectionChanged"
-            DisplayMemberPath="DeviceName" 
-        />
-        <ListBox
-            x:Name="AvailableRoomsListBox"
-            Grid.Row="0"
-            Grid.Column="1"
-            SelectionChanged="RoomListBox_SelectionChanged"
-            DisplayMemberPath="Name" 
-            SelectionMode="Extended"
-        />
-        <StackPanel Grid.Row="0" Grid.Column="2">
-            <TextBox x:Name="WebSocketInput" Width="200" Height="30" Text="ws://api.phos.steinjonker.nl" Margin="0,0,0,10" />
-            <Button Content="Connect" Click="ConnectWebSocket" Width="200" Height="30" Margin="0,0,0,10" />
-            <Button Content="Select Area" Click="SelectArea" Width="200" Height="50" Margin="0,0,0,10" />
-            <Button Content="{Binding CaptureButtonText}" IsEnabled="{Binding CanStartCapture}" Click="ToggleScreenCapture" Width="200" Height="50" />
-        </StackPanel>
-        <Image x:Name="ScreenImage" Grid.Row="1" Grid.ColumnSpan="3" />
-    </Grid>
+    <TabControl>
+        <TabItem Header="Main">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" MaxHeight="200" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ListBox
+                    x:Name="AvailableDisplayListBox"
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    SelectionChanged="DisplayListBox_SelectionChanged"
+                    DisplayMemberPath="DeviceName" />
+                <ListBox
+                    x:Name="AvailableRoomsListBox"
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    SelectionChanged="RoomListBox_SelectionChanged"
+                    DisplayMemberPath="Name"
+                    SelectionMode="Extended" />
+                <StackPanel Grid.Row="0" Grid.Column="2">
+                    <TextBox x:Name="WebSocketInput" Width="200" Height="30" Text="ws://api.phos.steinjonker.nl"
+                             Margin="0,0,0,10" />
+                    <Button Content="Connect" Click="ConnectWebSocket" Width="200" Height="30" Margin="0,0,0,10" />
+                    <Button Content="Select Area" Click="SelectArea" Width="200" Height="50" Margin="0,0,0,10" />
+                    <Button Content="{Binding CaptureButtonText}" IsEnabled="{Binding CanStartCapture}"
+                            Click="ToggleScreenCapture" Width="200" Height="50" />
+                </StackPanel>
+                <Image x:Name="ScreenImage" Grid.Row="1" Grid.ColumnSpan="3" />
+            </Grid>
+        </TabItem>
+        <TabItem Header="Game integrations">
+            <TextBlock>Hello World</TextBlock>
+        </TabItem>
+    </TabControl>
 </Window>
