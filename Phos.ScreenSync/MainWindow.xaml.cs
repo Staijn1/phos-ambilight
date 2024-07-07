@@ -8,6 +8,9 @@ using Phos.Screencapture;
 using ScreenCapture.NET;
 using SocketIOClient;
 using SocketIOClient.Transport;
+using System.Net.Http;
+using System.Threading;
+using System.Text.Json;
 
 namespace Phos.ScreenSync;
 
@@ -35,6 +38,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         get => _selectedDisplay != null && SelectedRooms?.Count > 0;
     }
 
+    private string _battlefield4Username;
+    private bool _isPolling;
+    private CancellationTokenSource _cancellationTokenSource;
 
     public MainWindow(PhosScreenCapture screenCapture)
     {
@@ -46,6 +52,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         // Load the WebSocket URL from the settings
         var settings = _settingsManager.LoadSettings();
         WebSocketInput.Text = settings?.WebSocketUrl ?? string.Empty;
+        Battlefield4UsernameInput.Text = settings?.Battlefield4Username ?? string.Empty;
 
         LoadDisplays();
 
@@ -57,7 +64,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var deviceName = "Phos Screensync - " + Environment.MachineName;
         var url = WebSocketInput.Text;
         // Save the WebSocket URL to the settings
-        var settings = new UserSettings { WebSocketUrl = url };
+        var settings = new UserSettings { WebSocketUrl = url, Battlefield4Username = Battlefield4UsernameInput.Text };
         _settingsManager.SaveSettings(settings);
 
         _connection = new PhosSocketIOClient(url, new SocketIOOptions
@@ -191,5 +198,52 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             HasCustomAreaSelected = true;
         };
         overlayWindow.Show();
+    }
+
+    private async void Battlefield4StartStopButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isPolling)
+        {
+            _isPolling = false;
+            _cancellationTokenSource.Cancel();
+            Battlefield4StartStopButton.Content = "Start";
+        }
+        else
+        {
+            _isPolling = true;
+            _cancellationTokenSource = new CancellationTokenSource();
+            Battlefield4StartStopButton.Content = "Stop";
+            _battlefield4Username = Battlefield4UsernameInput.Text;
+            var settings = new UserSettings { WebSocketUrl = WebSocketInput.Text, Battlefield4Username = _battlefield4Username };
+            _settingsManager.SaveSettings(settings);
+            await Task.Run(() => PollBattlefield4Api(_cancellationTokenSource.Token));
+        }
+    }
+
+    private async Task PollBattlefield4Api(CancellationToken cancellationToken)
+    {
+        using var httpClient = new HttpClient();
+        int previousDeaths = 0;
+
+        while (_isPolling && !cancellationToken.IsCancellationRequested)
+        {
+            var response = await httpClient.GetStringAsync($"https://api.bflist.io/bf4/v1/players/{_battlefield4Username}");
+            Dispatcher.Invoke(() => Battlefield4JsonOutput.Text = response);
+
+            var jsonDocument = JsonDocument.Parse(response);
+            var currentDeaths = jsonDocument.RootElement.GetProperty("deaths").GetInt32();
+
+            if (currentDeaths > previousDeaths)
+            {
+                // User has died, turn LED strip red for 1 second
+                await _connection.SendEvent(PhosSocketMessage.SetNetworkState, SelectedRooms.Select(r => r.Id).ToList(), new State { Colors = new List<string> { "#FF0000" } });
+                await Task.Delay(1000);
+                await _connection.SendEvent(PhosSocketMessage.SetNetworkState, SelectedRooms.Select(r => r.Id).ToList(), new State { Colors = new List<string> { "#000000" } });
+            }
+
+            previousDeaths = currentDeaths;
+
+            await Task.Delay(1000);
+        }
     }
 }
