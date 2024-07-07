@@ -227,7 +227,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         while (_isPolling && !cancellationToken.IsCancellationRequested)
         {
-            var response = await httpClient.GetStringAsync($"https://api.bflist.io/bf4/v1/players/{_battlefield4Username}");
+            var settings = _settingsManager.LoadSettings();
+            var battlefieldApiUrl = settings?.BattlefieldApiUrl ?? string.Empty;
+            var response = await httpClient.GetStringAsync($"{battlefieldApiUrl}{_battlefield4Username}");
             Dispatcher.Invoke(() => Battlefield4JsonOutput.Text = response);
 
             var jsonDocument = JsonDocument.Parse(response);
