@@ -49,14 +49,17 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <TextBox x:Name="Battlefield4UsernameInput" Width="200" Height="30" Margin="0,0,0,10" />
-                <Button x:Name="Battlefield4StartStopButton" Content="Start" Width="200" Height="30" Margin="0,0,0,10" Click="Battlefield4StartStopButton_Click" />
+                <StackPanel Grid.Row="0" Grid.Column="2">
+                    <TextBox x:Name="Battlefield4UsernameInput" Width="200" Height="30" Margin="0,0,0,10" />
+                    <Button x:Name="Battlefield4StartStopButton" Content="Start" Width="200" Height="30" Margin="0,0,0,10" Click="Battlefield4StartStopButton_Click" />
+                </StackPanel>
                 <TextBox x:Name="Battlefield4JsonOutput" Width="400" Height="200" Margin="0,0,0,10" IsReadOnly="True" VerticalScrollBarVisibility="Auto" />
             </Grid>
         </TabItem>

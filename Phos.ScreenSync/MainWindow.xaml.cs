@@ -230,13 +230,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var settings = _settingsManager.LoadSettings();
             var battlefieldApiUrl = settings?.BattlefieldApiUrl ?? string.Empty;
             var response = await httpClient.GetStringAsync($"{battlefieldApiUrl}{_battlefield4Username}");
-            Dispatcher.Invoke(() => Battlefield4JsonOutput.Text = response);
-
             var jsonDocument = JsonDocument.Parse(response);
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            var formattedJson = JsonSerializer.Serialize(jsonDocument, options);
+            Dispatcher.Invoke(() => Battlefield4JsonOutput.Text = formattedJson);
+
             var currentDeaths = jsonDocument.RootElement.GetProperty("deaths").GetInt32();
 
             if (currentDeaths > previousDeaths)
             {
+                Console.WriteLine("User has died");
                 // User has died, turn LED strip red for 1 second
                 await _connection.SendEvent(PhosSocketMessage.SetNetworkState, SelectedRooms.Select(r => r.Id).ToList(), new State { Colors = new List<string> { "#FF0000" } });
                 await Task.Delay(1000);
