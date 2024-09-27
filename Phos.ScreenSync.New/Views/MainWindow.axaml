@@ -33,15 +33,16 @@
         
         <!-- Main Content -->
         <Grid Grid.Row="1" Margin="8">
-            <Grid ColumnDefinitions="75*, 25*">
+            <Grid ColumnDefinitions="71*, 4, 25*">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
                     <Button Margin="5">Select Area</Button>
                     <Button Margin="5">Start</Button>
                 </StackPanel>
-                <Border Grid.Column="1" BorderBrush="LightGray" BorderThickness="2,0,0,0" Background="White">
+                <GridSplitter Grid.Column="1" ResizeDirection="Columns"></GridSplitter>
+                <Panel Grid.Column="2" Background="White">
                     <!-- <Image Source="{Binding ScreenImage}" /> -->
-                    <Label>Image here</Label>
-                </Border>
+                    <Label Background="Green">Image here</Label>
+                </Panel>
             </Grid>
         </Grid>
     </Grid>
