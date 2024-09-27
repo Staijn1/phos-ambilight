@@ -1,10 +1,20 @@
-﻿namespace Phos.ScreenSync.New.ViewModels;
+﻿using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
 
-public partial class MainWindowViewModel : ViewModelBase
+namespace Phos.ScreenSync.New.ViewModels;
+
+public partial class MainWindowViewModel : ObservableObject
 {
-#pragma warning disable CA1822 // Mark members as static
-    public string Greeting => "Welcome to Avalonia!";
-#pragma warning restore CA1822 // Mark members as static
-    
-    public bool IsCapturing { get; set; }
+    [ObservableProperty]
+    private bool _isConnected;
+
+
+    public MainWindowViewModel()
+    {
+        Task.Run(async () =>
+        {
+            await Task.Delay(2000);
+            this.IsConnected = true;
+        });
+    }
 }

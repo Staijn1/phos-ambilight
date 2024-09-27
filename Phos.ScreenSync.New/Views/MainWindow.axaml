@@ -22,8 +22,13 @@
                 <Label FontWeight="Black">AVALONIA</Label>
                 <Label FontWeight="Black">SCREEN SYNC</Label>
             </StackPanel>
-            <Label Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center">CONNECTED</Label>
-            <Button Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Content="⚙" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+            <Panel Grid.Column="1" Width="130" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Label IsVisible="{Binding IsConnected}">
+                    CONNECTED
+                </Label>
+                <Label IsVisible="{Binding !IsConnected}">DISCONNECTED</Label>
+            </Panel>
+            <Button Grid.Column="2" Width="60" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Content="⚙" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
         </Grid>
         
         <!-- Main Content -->
