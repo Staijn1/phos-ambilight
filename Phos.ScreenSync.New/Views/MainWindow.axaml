@@ -14,41 +14,32 @@
              to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
         <vm:MainWindowViewModel/>
     </Design.DataContext>
-    
-    <TabControl>
-        <TabItem Header="Screen Capture">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*" MaxHeight="200" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <ListBox
-                    x:Name="AvailableDisplayListBox"
-                    Grid.Row="0"
-                    Grid.Column="0"/>
-                <ListBox
-                    x:Name="AvailableRoomsListBox"
-                    Grid.Row="0"
-                    Grid.Column="1"/>
-                <StackPanel Grid.Row="0" Grid.Column="2">
-                    <TextBox x:Name="WebSocketInput" Width="200" Height="30" Text="ws://api.phos.steinjonker.nl"
-                             Margin="0,0,0,10" />
-                    <!-- <Button Content="Connect" Click="ConnectWebSocket" Width="200" Height="30" Margin="0,0,0,10" /> -->
-                    <!-- <Button Content="Select Area" Click="SelectArea" Width="200" Height="50" Margin="0,0,0,10" /> -->
-                    <!-- <Button Content="{Binding CaptureButtonText}" IsEnabled="{Binding CanStartCapture}" -->
-                            <!-- Click="ToggleScreenCapture" Width="200" Height="50" /> -->
+   
+    <Grid RowDefinitions="Auto, *, Auto">
+        <!-- Title Bar -->
+        <Grid Grid.Row="0" Background="Orange" Height="40" ColumnDefinitions="*, Auto, Auto">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Label FontWeight="Black">AVALONIA</Label>
+                <Label FontWeight="Black">SCREEN SYNC</Label>
+            </StackPanel>
+            <Label Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center">CONNECTED</Label>
+            <Button Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Content="⚙" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+        </Grid>
+        
+        <!-- Main Content -->
+        <Grid Grid.Row="1" Margin="8">
+            <Grid ColumnDefinitions="75*, 25*">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Button Margin="5">Select Area</Button>
+                    <Button Margin="5">Start</Button>
                 </StackPanel>
+                <Border Grid.Column="1" BorderBrush="LightGray" BorderThickness="2,0,0,0" Background="White">
+                    <!-- <Image Source="{Binding ScreenImage}" /> -->
+                    <Label>Image here</Label>
+                </Border>
             </Grid>
-        </TabItem>
-        <TabItem Header="Game integrations">
-            <TextBlock>No Game Integrations Available Yet!</TextBlock>
-        </TabItem>
-    </TabControl>
+        </Grid>
+    </Grid>
     
    
 </Window>
