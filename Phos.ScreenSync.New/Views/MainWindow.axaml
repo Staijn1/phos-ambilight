@@ -12,13 +12,14 @@
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
              to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainWindowViewModel/>
+        <vm:MainWindowViewModel />
     </Design.DataContext>
-   
+
     <Grid RowDefinitions="Auto, *, Auto">
         <!-- Title Bar -->
-        <Grid Grid.Row="0" Background="Orange" Height="40" ColumnDefinitions="*, Auto, Auto">
-            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+        <Grid Grid.Row="0" Background="Orange" Height="40" ColumnDefinitions="*, Auto, Auto, Auto">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center"
+                        HorizontalAlignment="Center">
                 <Label FontWeight="Black">AVALONIA</Label>
                 <Label FontWeight="Black">SCREEN SYNC</Label>
             </StackPanel>
@@ -28,24 +29,29 @@
                 </Label>
                 <Label IsVisible="{Binding !IsConnected}">DISCONNECTED</Label>
             </Panel>
-            <Button Grid.Column="2" Width="60" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Content="⚙" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+            <Button
+                Grid.Column="2"
+                Width="100"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                Content="Screen Sync"
+                Command="{Binding NavigateToScreenSyncCommand}" />
+            <Button
+                Grid.Column="3"
+                Width="60"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
+                Content="⚙"
+                Command="{Binding NavigateToSettingsCommand}" />
         </Grid>
-        
-        <!-- Main Content -->
-        <Grid Grid.Row="1" Margin="8">
-            <Grid ColumnDefinitions="71*, 4, 25*">
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <Button Margin="5">Select Area</Button>
-                    <Button Margin="5">Start</Button>
-                </StackPanel>
-                <GridSplitter Grid.Column="1" ResizeDirection="Columns"></GridSplitter>
-                <Panel Grid.Column="2" Background="White">
-                    <!-- <Image Source="{Binding ScreenImage}" /> -->
-                    <Label Background="Green">Image here</Label>
-                </Panel>
-            </Grid>
-        </Grid>
+
+        <!-- Content -->
+        <TransitioningContentControl Grid.Row="1" Content="{Binding CurrentScreen }"></TransitioningContentControl>
     </Grid>
-    
-   
+
+
 </Window>

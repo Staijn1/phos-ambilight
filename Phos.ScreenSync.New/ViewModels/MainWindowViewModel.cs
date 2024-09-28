@@ -1,20 +1,25 @@
-﻿using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace Phos.ScreenSync.New.ViewModels;
 
-public partial class MainWindowViewModel : ObservableObject
+public partial class MainWindowViewModel : ViewModelBase
 {
     [ObservableProperty]
     private bool _isConnected;
 
+    [ObservableProperty] 
+    private ViewModelBase _currentScreen = new ScreenSyncPageViewModel();
 
-    public MainWindowViewModel()
+    [RelayCommand]
+    public void NavigateToScreenSyncCommand()
     {
-        Task.Run(async () =>
-        {
-            await Task.Delay(2000);
-            this.IsConnected = true;
-        });
+        CurrentScreen = new ScreenSyncPageViewModel();
+    }
+
+    [RelayCommand]
+    public void NavigateToSettings()
+    {
+        CurrentScreen = new SettingsPageViewModel();
     }
 }
