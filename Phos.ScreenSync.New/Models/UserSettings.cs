@@ -1,7 +1,14 @@
-﻿namespace Phos.ScreenSync;
+﻿using System.Collections.Generic;
+using CommunityToolkit.Mvvm.ComponentModel;
+using Phos.Data;
 
-public class UserSettings
+namespace Phos.ScreenSync;
+
+public partial class UserSettings: ObservableObject
 {
+    [ObservableProperty]
+    private bool _autoConnect = false;
     public string WebSocketUrl { get; set; } = string.Empty;
-    public bool AutoConnect { get; set; } = false;
+    
+    public List<Room> SelectedRooms { get; set; } = new();
 }

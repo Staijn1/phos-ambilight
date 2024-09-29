@@ -11,6 +11,14 @@
         <TextBlock Text="WebSocket URL:"/>
         <TextBox Text="{Binding UserSettings.WebSocketUrl}" Margin="0,0,0,10"/>
         <CheckBox Content="Auto Connect" IsChecked="{Binding UserSettings.AutoConnect}" Margin="0,0,0,20"/>
+        <TextBlock Text="Available Rooms:"/>
+        <ListBox ItemsSource="{Binding AvailableRooms}" Margin="0,0,0,20" SelectionMode="Multiple" SelectedItems="{Binding SelectedRooms}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Name}"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
         <Button Content="Save" Command="{Binding SaveCommand}" HorizontalAlignment="Right"/>
     </StackPanel>
 </UserControl>
