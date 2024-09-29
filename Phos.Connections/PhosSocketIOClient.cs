@@ -32,9 +32,9 @@ public class PhosSocketIOClient
         OnConnect.Invoke(this, EventArgs.Empty);
     }
 
-    private void Connect()
+    public Task Connect()
     {
-        client.ConnectAsync();
+        return client.ConnectAsync();
     }
 
     /// <summary>
@@ -67,6 +67,7 @@ public class PhosSocketIOClient
 
         return tcs.Task;
     }
+    
 }
 
 public static class PhosSocketMessage

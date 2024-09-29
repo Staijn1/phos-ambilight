@@ -12,38 +12,35 @@ namespace Phos.ScreenSync.New.ViewModels;
 public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly SettingsManager<UserSettings> _settingsManager;
-    private PhosSocketIOClient? _connection;
-    
-    [ObservableProperty]
-    private bool _isConnected;
+    private static PhosSocketIOClient? _connection;
 
-    [ObservableProperty] 
-    private ViewModelBase _currentScreen = new ScreenSyncPageViewModel();
+    [ObservableProperty] private bool _isConnected;
+
+    [ObservableProperty] private ViewModelBase _currentScreen;
 
     public MainWindowViewModel()
     {
         _settingsManager = new SettingsManager<UserSettings>("userSettings.json");
         var settings = _settingsManager.LoadSettings();
 
-        if (settings is { AutoConnect: true })
-        {
-            ConnectWebSocket(settings.WebSocketUrl);
-        }
+
+        CreateWebSocket(settings.WebSocketUrl, settings.AutoConnect);
+        NavigateToScreenSyncCommand();
     }
-    
+
     [RelayCommand]
     public void NavigateToScreenSyncCommand()
     {
-        CurrentScreen = new ScreenSyncPageViewModel();
+        CurrentScreen = new ScreenSyncPageViewModel(_connection);
     }
 
     [RelayCommand]
     public void NavigateToSettings()
     {
-        CurrentScreen = new SettingsPageViewModel();
+        CurrentScreen = new SettingsPageViewModel(_connection);
     }
-    
-    private void ConnectWebSocket(string webSocketUrl)
+
+    private void CreateWebSocket(string webSocketUrl, bool autoConnect)
     {
         var deviceName = "Phos Screensync - " + Environment.MachineName;
 
@@ -53,13 +50,14 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         _connection = new PhosSocketIOClient(webSocketUrl, new SocketIOOptions
-        {
-            Transport = TransportProtocol.WebSocket,
-            Query = new List<KeyValuePair<string, string>>
             {
-                new("deviceName", deviceName),
-            }
-        });
+                Transport = TransportProtocol.WebSocket,
+                Query = new List<KeyValuePair<string, string>>
+                {
+                    new("deviceName", deviceName),
+                }
+            },
+            autoConnect);
 
         _connection.OnConnect += async (sender, args) =>
         {
@@ -71,7 +69,7 @@ public partial class MainWindowViewModel : ViewModelBase
             var networkState = response.GetValue<NetworkState>();
             // OnNewNetworkState(networkState);
         };
-        
+
         _connection.OnDisconnect += (sender, args) => { IsConnected = false; };
         _connection.OnDatabaseChange += (sender, response) => { Console.WriteLine("Database change event received"); };
     }

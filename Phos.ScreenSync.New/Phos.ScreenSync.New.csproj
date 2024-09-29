@@ -25,5 +25,6 @@
     <ItemGroup>
       <ProjectReference Include="..\Phos.Connections\Phos.Connections.csproj" />
       <ProjectReference Include="..\Phos.Data\Phos.Data.csproj" />
+      <ProjectReference Include="..\Phos.Screencapture\Phos.Screencapture.csproj" />
     </ItemGroup>
 </Project>

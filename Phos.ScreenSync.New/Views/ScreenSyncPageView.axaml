@@ -2,19 +2,20 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Phos.ScreenSync.New.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:DataType="vm:ScreenSyncPageViewModel"
              x:Class="Phos.ScreenSync.New.Views.ScreenSyncPageView">
     <Grid Grid.Row="1" Margin="8">
         <Grid ColumnDefinitions="71*, 4, 25*">
             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center"
                         HorizontalAlignment="Center">
-                <Button Margin="5">Select Area</Button>
-                <Button Margin="5">Start</Button>
+                <Button Margin="5" Command="{Binding OpenSelectAreaWindowCommand}">Select Area</Button>
+                <Button Margin="5" Command="{Binding ToggleScreenCapture}">Start</Button>
             </StackPanel>
             <GridSplitter Grid.Column="1" ResizeDirection="Columns"></GridSplitter>
             <Panel Grid.Column="2" Background="White">
-                <!-- <Image Source="{Binding ScreenImage}" /> -->
-                <Label Background="Green">Image here</Label>
+                <Image Width="100" Height="100" x:Name="ScreenImageRef" Source="{Binding CapturedImage}" />
             </Panel>
         </Grid>
     </Grid>
