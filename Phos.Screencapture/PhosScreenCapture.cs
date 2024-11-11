@@ -67,29 +67,36 @@ public class PhosScreenCapture
         }
     }
 
-    public ColorRGB GetAverageColorInArea()
+    /// <summary>
+    /// Calculates the average color for each vertical column in the captured area.
+    /// </summary>
+    /// <returns>A list of <see cref="ColorRGB"/> objects, each representing the average color of a vertical column.</returns>
+    public List<ColorRGB> GetAverageColorInArea()
     {
         var image = GetImage();
-        long totalR = 0, totalG = 0, totalB = 0, totalA = 0;
-        int pixelCount = image.Width * image.Height;
+        var averageColors = new List<ColorRGB>();
 
-        for (int y = 0; y < image.Height; y++)
+        for (int x = 0; x < image.Width; x++)
         {
-            for (int x = 0; x < image.Width; x++)
+            long totalR = 0, totalG = 0, totalB = 0;
+            int pixelCount = image.Height;
+
+            for (int y = 0; y < image.Height; y++)
             {
                 ColorBGRA pixel = image[x, y];
                 totalR += pixel.R;
                 totalG += pixel.G;
                 totalB += pixel.B;
             }
+
+            byte avgR = (byte)(totalR / pixelCount);
+            byte avgG = (byte)(totalG / pixelCount);
+            byte avgB = (byte)(totalB / pixelCount);
+
+            averageColors.Add(new ColorRGB(avgR, avgG, avgB));
         }
 
-        byte avgR = (byte)(totalR / pixelCount);
-        byte avgG = (byte)(totalG / pixelCount);
-        byte avgB = (byte)(totalB / pixelCount);
-        byte avgA = (byte)(totalA / pixelCount);
-
-        return new ColorRGB(avgR, avgG, avgB);
+        return averageColors;
     }
 
     public BitmapSource GetImageAsBitmap()

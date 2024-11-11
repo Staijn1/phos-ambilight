@@ -133,18 +133,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private async void StartScreenCapture()
     {
-        var newState = await PrepareSelectedRoomsForScreenSync();
-
-
+        await PrepareSelectedRoomsForScreenSync();
+        
         while (_isCapturing)
         {
             Console.WriteLine("Capturing...");
-            var averageColor = _screenCapture.GetAverageColorInArea();
-            var colors = newState.Colors;
-            colors[0] = ColorUtils.ColorRGBToHex(averageColor);
-            newState.Colors = colors;
-            await _connection.SendEvent(PhosSocketMessage.SetNetworkState, SelectedRooms.Select(r => r.Id).ToList(),
-                newState);
+            var averageColors = _screenCapture.GetAverageColorInArea();
+            await _connection.SendEvent(PhosSocketMessage.IndividualLedControl, SelectedRooms.Select(r => r.Id).ToList(), averageColors);
 
             // Update the Image control on the UI thread
             Dispatcher.Invoke(new Action(() => { ScreenImage.Source = _screenCapture.GetImageAsBitmap(); }));
@@ -157,14 +152,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         // Set the mode for all rooms to the visualizer mode with FFT 255 (max)
         var newState = new State
         {
-            Mode = 72,
+            Mode = 0,
             Colors = colors,
             Brightness = 255,
             Speed = 2000
         };
-        await _connection.SendEvent(PhosSocketMessage.SetFFTValue, SelectedRooms.Select(r => r.Id).ToList(), 255);
-        await _connection.SendEvent(PhosSocketMessage.SetNetworkState, SelectedRooms.Select(r => r.Id).ToList(),
-            newState);
+        await _connection.SendEvent(PhosSocketMessage.SetNetworkState, SelectedRooms.Select(r => r.Id).ToList(), newState);
         return newState;
     }
 

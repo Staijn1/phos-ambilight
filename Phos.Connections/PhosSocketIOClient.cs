@@ -77,4 +77,5 @@ public static class PhosSocketMessage
     public static readonly string SetNetworkState = "setState";
     public static readonly string SetNetworkStateRaw = "setNetworkStateRaw";
     public static readonly string SetFFTValue = "FFT";
+    public static readonly string IndividualLedControl = "individualLedControl";
 }
