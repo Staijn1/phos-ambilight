@@ -19,9 +19,9 @@ public class PhosSocketIOClient
             Connect();
         }
 
-        client.OnConnected += this.OnConnected;
-        client.OnDisconnected += (sender, args) => OnDisconnect.Invoke(this, EventArgs.Empty);
-        client.On(PhosSocketMessage.DatabaseChange, async response => OnDatabaseChange.Invoke(this, response));
+        client.OnConnected += OnConnected;
+        client.OnDisconnected += (sender, args) => OnDisconnect?.Invoke(this, EventArgs.Empty);
+        client.On(PhosSocketMessage.DatabaseChange, response => OnDatabaseChange?.Invoke(this, response));
     }
 
 

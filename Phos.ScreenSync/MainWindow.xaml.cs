@@ -78,6 +78,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var networkState = response.GetValue<NetworkState>();
             OnNewNetworkState(networkState);
         };
+        _connection.OnDisconnect += (sender, args) =>
+        {
+            Console.WriteLine("Disconnected from server");
+        };
         _connection.OnDatabaseChange += (sender, response) => { Console.WriteLine("Database change event received"); };
     }
 
