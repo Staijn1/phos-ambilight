@@ -1,6 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System.Windows;
-using Phos.Connections;
+﻿using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
 using Phos.Screencapture;
 
 namespace Phos.ScreenSync
