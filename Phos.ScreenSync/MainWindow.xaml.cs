@@ -20,7 +20,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool HasCustomAreaSelected { get; set; } = false;
     private bool _isScreenSelected = false;
     private bool _isCapturing = false;
-    private ACSharedMemory _assettoCorsaSharedMemory;
+    private AcSharedMemory _assettoCorsaSharedMemory;
     private bool _isAssettoCorsaIntegrationRunning = false;
     private Display _selectedDisplay;
     private PhosSocketIOClient? _connection;
@@ -54,7 +54,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         DataContext = this;
         
-        _assettoCorsaSharedMemory = new ACSharedMemory();
+        _assettoCorsaSharedMemory = new AcSharedMemory();
         _assettoCorsaSharedMemory.GraphicsInterval = 100; // 100ms
         _assettoCorsaSharedMemory.GraphicsUpdated += OnGraphicsUpdated;
         
@@ -211,6 +211,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     #region Assetto Corsa Integration
     private AC_FLAG_TYPE _lastFlag = AC_FLAG_TYPE.AC_NO_FLAG;
     private int _maxRpm = 0;
+    private int _lastMappedRpm = 0;
     public IEnumerable<Room> AcSelectedRooms { get; set; } = [];
 
     private void ToggleAssettoCorsaIntegration(object sender, RoutedEventArgs e)
@@ -226,7 +227,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             // Start the integration
             _assettoCorsaSharedMemory.Start();
-            _connection.SendEvent(PhosSocketMessage.SetNetworkState, AcSelectedRooms.Select(r => r.Id).ToList(), new State
+            _connection?.SendEvent(PhosSocketMessage.SetNetworkState, AcSelectedRooms.Select(r => r.Id).ToList(), new State
             {
                 Mode = 72,
                 Colors = new List<string> { "#0000FF", "#000000", "#000000" },
@@ -297,7 +298,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     
     /**
      * Displays the RPM of the car on the ledstrip in the selected rooms.
-     * Maps the RPM (0 - maxRPM received from StaticInfo), to 0 - 255 for the ledstrip.
+     * Maps the RPM (range: > 90 % max RPM (actual) - maxRPM received from StaticInfo), to 0 - 255 for the ledstrip.
      */
     private void OnPhysicsUpdated(object sender, PhysicsEventArgs e)
     {
@@ -307,6 +308,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         
         var fftValue = (int) Math.Round((e.Physics.Rpms / (float) _maxRpm) * 255);
+        
+        if (fftValue == _lastMappedRpm)
+        {
+            return;
+        }
+        
+        _lastMappedRpm = fftValue;
         _connection.SendEvent(PhosSocketMessage.SetFFTValue, AcSelectedRooms.Select(r => r.Id).ToList(), fftValue);
     }
 
