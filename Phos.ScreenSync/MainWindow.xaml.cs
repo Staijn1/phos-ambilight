@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using Phos.Connections;
+using Phos.Connections.AssettoCorsa.SharedMemory;
 using Phos.Data;
 using Phos.Screencapture;
 using ScreenCapture.NET;
@@ -19,20 +20,22 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool HasCustomAreaSelected { get; set; } = false;
     private bool _isScreenSelected = false;
     private bool _isCapturing = false;
+    private ACSharedMemory _assettoCorsaSharedMemory;
+    private bool _isAssettoCorsaIntegrationRunning = false;
     private Display _selectedDisplay;
-    private PhosSocketIOClient _connection;
+    private PhosSocketIOClient? _connection;
     private readonly PhosScreenCapture _screenCapture;
     private Task? screenCaptureThread;
     private readonly SettingsManager<UserSettings> _settingsManager;
 
-    private List<Room> SelectedRooms { get; set; } = [];
+    private List<Room> ScreenSyncSelectedRooms { get; set; } = [];
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public string CaptureButtonText => _isCapturing ? "Stop Capture" : "Start Capture";
 
     public bool CanStartCapture
     {
-        get => _selectedDisplay != null && SelectedRooms?.Count > 0;
+        get => _selectedDisplay != null && ScreenSyncSelectedRooms?.Count > 0;
     }
 
 
@@ -50,6 +53,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         LoadDisplays();
 
         DataContext = this;
+        
+        _assettoCorsaSharedMemory = new ACSharedMemory();
+        _assettoCorsaSharedMemory.GraphicsInterval = 100; // 100ms
+        _assettoCorsaSharedMemory.GraphicsUpdated += OnGraphicsUpdated;
     }
 
     private void ConnectWebSocket(object o, RoutedEventArgs routedEventArgs)
@@ -92,6 +99,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void OnNewNetworkState(NetworkState networkState)
     {
         Dispatcher.Invoke(() => { AvailableRoomsListBox.ItemsSource = networkState.Rooms; });
+        Dispatcher.Invoke(() => { AcAvailableRoomsListBox.ItemsSource = networkState.Rooms; });
     }
 
     private void LoadDisplays()
@@ -99,7 +107,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         AvailableDisplayListBox.ItemsSource = _screenCapture.GetDisplays();
     }
 
-    public void DisplayListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    public void ScreenSyncDisplayListBoxSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         _selectedDisplay = (Display)AvailableDisplayListBox.SelectedItem;
         _screenCapture.SelectDisplay(_selectedDisplay);
@@ -147,7 +155,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var colors = newState.Colors;
             colors[0] = ColorUtils.ColorRGBToHex(averageColor);
             newState.Colors = colors;
-            await _connection.SendEvent(PhosSocketMessage.SetNetworkState, SelectedRooms.Select(r => r.Id).ToList(),
+            await _connection.SendEvent(PhosSocketMessage.SetNetworkState, ScreenSyncSelectedRooms.Select(r => r.Id).ToList(),
                 newState);
 
             // Update the Image control on the UI thread
@@ -166,8 +174,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Brightness = 255,
             Speed = 2000
         };
-        await _connection.SendEvent(PhosSocketMessage.SetFFTValue, SelectedRooms.Select(r => r.Id).ToList(), 255);
-        await _connection.SendEvent(PhosSocketMessage.SetNetworkState, SelectedRooms.Select(r => r.Id).ToList(),
+        await _connection.SendEvent(PhosSocketMessage.SetFFTValue, ScreenSyncSelectedRooms.Select(r => r.Id).ToList(), 255);
+        await _connection.SendEvent(PhosSocketMessage.SetNetworkState, ScreenSyncSelectedRooms.Select(r => r.Id).ToList(),
             newState);
         return newState;
     }
@@ -177,11 +185,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    private void RoomListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void ScreenSyncRoomListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         var selectedRooms = AvailableRoomsListBox.SelectedItems.Cast<Room>().ToList();
-        SelectedRooms = selectedRooms.ToList();
-        _ = PrepareSelectedRoomsForScreenSync();
+        ScreenSyncSelectedRooms = selectedRooms.ToList();
         OnPropertyChanged(nameof(CanStartCapture));
     }
 
@@ -196,4 +203,88 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         };
         overlayWindow.Show();
     }
+
+    #region Assetto Corsa Integration
+    private AC_FLAG_TYPE _lastFlag = AC_FLAG_TYPE.AC_NO_FLAG;
+    public IEnumerable<Room> AcSelectedRooms { get; set; }
+
+    private void ToggleAssettoCorsaIntegration(object sender, RoutedEventArgs e)
+    {
+        if (_isAssettoCorsaIntegrationRunning)
+        {
+            // Stop the integration
+            _assettoCorsaSharedMemory.Stop();
+            StartStopIntegrationButton.Content = "Start Integration";
+            _isAssettoCorsaIntegrationRunning = false;
+        }
+        else
+        {
+            // Start the integration
+            _assettoCorsaSharedMemory.Start();
+            StartStopIntegrationButton.Content = "Stop Integration";
+            _isAssettoCorsaIntegrationRunning = true;
+        }
+    }
+
+    private void OnGraphicsUpdated(object sender, GraphicsEventArgs e)
+    {
+        if (_connection == null || !_connection.IsConnected)
+        {
+            return;
+        }
+        
+        
+        // Set the color of the flag to the selected room
+       
+        if (e.Graphics.Flag != AC_FLAG_TYPE.AC_NO_FLAG && e.Graphics.Flag != _lastFlag)
+        {
+            var newState = new State
+            {
+                Mode = 1,
+                Colors = new List<string> { "#000000", "#000000", "#000000" },
+                Brightness = 255,
+                Speed = 1000
+            };
+            
+            switch (e.Graphics.Flag)
+            {
+                case AC_FLAG_TYPE.AC_BLUE_FLAG:
+                    newState.Colors[0] = "#0000FF";
+                    break;
+                case AC_FLAG_TYPE.AC_WHITE_FLAG:
+                    newState.Colors[0] = "#FFFFFF";
+                    break;
+                case AC_FLAG_TYPE.AC_YELLOW_FLAG:
+                    newState.Colors[0] = "#FFFF00";
+                    break;
+                case AC_FLAG_TYPE.AC_PENALTY_FLAG:
+                    newState.Colors[0] = "#FF0000";
+                    break;
+            }
+
+            _connection.SendEvent(PhosSocketMessage.SetNetworkState, AcSelectedRooms.Select(r => r.Id).ToList(), newState);
+        } else if (_lastFlag != AC_FLAG_TYPE.AC_NO_FLAG && e.Graphics.Flag == AC_FLAG_TYPE.AC_NO_FLAG)
+        {
+            var newState = new State
+            {
+                Mode = 72,
+                Colors = new List<string> { "#000000", "#000000", "#000000" },
+                Brightness = 255,
+                Speed = 2000
+            };
+            _connection.SendEvent(PhosSocketMessage.SetNetworkState, AcSelectedRooms.Select(r => r.Id).ToList(), newState);
+        }
+        
+        _lastFlag = e.Graphics.Flag;
+        // todo: Else show the RPM
+        
+    }
+    
+    private void ACRoomListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        AcSelectedRooms = AcAvailableRoomsListBox.SelectedItems.Cast<Room>();
+    }
+
+
+    #endregion
 }

@@ -22,13 +22,13 @@
                     x:Name="AvailableDisplayListBox"
                     Grid.Row="0"
                     Grid.Column="0"
-                    SelectionChanged="DisplayListBox_SelectionChanged"
+                    SelectionChanged="ScreenSyncDisplayListBoxSelectionChanged"
                     DisplayMemberPath="DeviceName" />
                 <ListBox
                     x:Name="AvailableRoomsListBox"
                     Grid.Row="0"
                     Grid.Column="1"
-                    SelectionChanged="RoomListBox_SelectionChanged"
+                    SelectionChanged="ScreenSyncRoomListBox_SelectionChanged"
                     DisplayMemberPath="Name"
                     SelectionMode="Extended" />
                 <StackPanel Grid.Row="0" Grid.Column="2">
@@ -42,8 +42,15 @@
                 <Image x:Name="ScreenImage" Grid.Row="1" Grid.ColumnSpan="3" />
             </Grid>
         </TabItem>
-        <TabItem Header="Game integrations">
-            <TextBlock>Hello World</TextBlock>
+        <TabItem Header="Assetto Corsa">
+            <StackPanel>
+                <ListBox
+                    x:Name="AcAvailableRoomsListBox"
+                    SelectionChanged="ACRoomListBox_SelectionChanged"
+                    DisplayMemberPath="Name"
+                    SelectionMode="Extended" />
+                <Button Name="StartStopIntegrationButton" Content="Start Integration" Click="ToggleAssettoCorsaIntegration" />
+            </StackPanel>
         </TabItem>
     </TabControl>
 </Window>
