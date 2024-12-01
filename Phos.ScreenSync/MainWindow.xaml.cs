@@ -212,6 +212,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private AC_FLAG_TYPE _lastFlag = AC_FLAG_TYPE.AC_NO_FLAG;
     private int _maxRpm = 0;
     private int _lastMappedRpm = 0;
+    private float _lastActualRpm = 0;
     public IEnumerable<Room> AcSelectedRooms { get; set; } = [];
 
     private void ToggleAssettoCorsaIntegration(object sender, RoutedEventArgs e)
@@ -302,21 +303,56 @@ public partial class MainWindow : Window, INotifyPropertyChanged
      */
     private void OnPhysicsUpdated(object sender, PhysicsEventArgs e)
     {
+        // Check if the connection is valid and connected
         if (_connection is not { IsConnected: true })
         {
             return;
         }
-        
-        var fftValue = (int) Math.Round((e.Physics.Rpms / (float) _maxRpm) * 255);
-        
-        if (fftValue == _lastMappedRpm)
+
+        // Get the actual RPM value from the physics event arguments
+        var actualRpm = e.Physics.Rpms;
+
+        // Ensure max RPM is defined and not zero to avoid division by zero
+        if (_maxRpm <= 0)
         {
             return;
         }
-        
+
+        // Calculate the minimum RPM threshold (90% of the max RPM)
+        var minRpmThreshold = 0.75f * _maxRpm;
+
+        // If the RPM is below 90% of max RPM and it was below the threshold last time, exit early
+        if (actualRpm < minRpmThreshold && _lastActualRpm < minRpmThreshold)
+        {
+            return;
+        }
+
+        // If the RPM is below 90% of max RPM, set the LED strip value to 0 (off)
+        if (actualRpm < minRpmThreshold)
+        {
+            _connection.SendEvent(PhosSocketMessage.SetFFTValue, AcSelectedRooms.Select(r => r.Id).ToList(), 0);
+            _lastActualRpm = actualRpm;
+            return;
+        }
+
+        // Map the RPM value in the range of 90% max RPM to max RPM to a value between 0 and 255 for the LED strip
+        var fftValue = (int)Math.Round(((actualRpm - minRpmThreshold) / (float)(_maxRpm - minRpmThreshold)) * 255);
+
+        // Check if the mapped RPM value is the same as the last one
+        if (fftValue == _lastMappedRpm)
+        {
+            _lastActualRpm = actualRpm;
+            return;
+        }
+
+        // Update the last mapped RPM value and actual RPM value
         _lastMappedRpm = fftValue;
+        _lastActualRpm = actualRpm;
+
+        // Send the calculated value to the LED strips in the selected rooms
         _connection.SendEvent(PhosSocketMessage.SetFFTValue, AcSelectedRooms.Select(r => r.Id).ToList(), fftValue);
     }
+
 
     /**
      * Stores the max rpm of this car for later use in the physics update.
