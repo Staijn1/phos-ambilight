@@ -57,6 +57,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _assettoCorsaSharedMemory = new ACSharedMemory();
         _assettoCorsaSharedMemory.GraphicsInterval = 100; // 100ms
         _assettoCorsaSharedMemory.GraphicsUpdated += OnGraphicsUpdated;
+        
+        _assettoCorsaSharedMemory.PhysicsInterval = 1; // 50ms
+        _assettoCorsaSharedMemory.PhysicsUpdated += OnPhysicsUpdated;
+        
+        _assettoCorsaSharedMemory.StaticInfoInterval = 2500; // 2.5s
+        _assettoCorsaSharedMemory.StaticInfoUpdated += OnStaticInfoUpdated;
     }
 
     private void ConnectWebSocket(object o, RoutedEventArgs routedEventArgs)
@@ -148,15 +154,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var newState = await PrepareSelectedRoomsForScreenSync();
 
 
-        while (_isCapturing)
+        while (_isCapturing && _connection != null && _connection.IsConnected)
         {
             Console.WriteLine("Capturing...");
             var averageColor = _screenCapture.GetAverageColorInArea();
             var colors = newState.Colors;
             colors[0] = ColorUtils.ColorRGBToHex(averageColor);
             newState.Colors = colors;
-            await _connection.SendEvent(PhosSocketMessage.SetNetworkState, ScreenSyncSelectedRooms.Select(r => r.Id).ToList(),
-                newState);
+            await _connection.SendEvent(PhosSocketMessage.SetNetworkState, ScreenSyncSelectedRooms.Select(r => r.Id).ToList(), newState);
 
             // Update the Image control on the UI thread
             Dispatcher.Invoke(new Action(() => { ScreenImage.Source = _screenCapture.GetImageAsBitmap(); }));
@@ -175,8 +180,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Speed = 2000
         };
         await _connection.SendEvent(PhosSocketMessage.SetFFTValue, ScreenSyncSelectedRooms.Select(r => r.Id).ToList(), 255);
-        await _connection.SendEvent(PhosSocketMessage.SetNetworkState, ScreenSyncSelectedRooms.Select(r => r.Id).ToList(),
-            newState);
+        await _connection.SendEvent(PhosSocketMessage.SetNetworkState, ScreenSyncSelectedRooms.Select(r => r.Id).ToList(), newState);
         return newState;
     }
 
@@ -206,7 +210,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     #region Assetto Corsa Integration
     private AC_FLAG_TYPE _lastFlag = AC_FLAG_TYPE.AC_NO_FLAG;
-    public IEnumerable<Room> AcSelectedRooms { get; set; }
+    private int _maxRpm = 0;
+    public IEnumerable<Room> AcSelectedRooms { get; set; } = [];
 
     private void ToggleAssettoCorsaIntegration(object sender, RoutedEventArgs e)
     {
@@ -221,21 +226,31 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             // Start the integration
             _assettoCorsaSharedMemory.Start();
+            _connection.SendEvent(PhosSocketMessage.SetNetworkState, AcSelectedRooms.Select(r => r.Id).ToList(), new State
+            {
+                Mode = 72,
+                Colors = new List<string> { "#0000FF", "#000000", "#000000" },
+                Brightness = 255,
+                Speed = 2000
+            });
             StartStopIntegrationButton.Content = "Stop Integration";
             _isAssettoCorsaIntegrationRunning = true;
         }
     }
 
+    /**
+     * When a flag is being shown in Assetto Corsa, then reflect that by displaying it on the ledstrip in the selected rooms.
+     * When the flag changes back to no flag, then set the ledstrip to the visualizer mode to prepare for RPM display.
+     */
     private void OnGraphicsUpdated(object sender, GraphicsEventArgs e)
     {
-        if (_connection == null || !_connection.IsConnected)
+        if (_connection is not { IsConnected: true })
         {
             return;
         }
         
         
         // Set the color of the flag to the selected room
-       
         if (e.Graphics.Flag != AC_FLAG_TYPE.AC_NO_FLAG && e.Graphics.Flag != _lastFlag)
         {
             var newState = new State
@@ -263,21 +278,44 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }
 
             _connection.SendEvent(PhosSocketMessage.SetNetworkState, AcSelectedRooms.Select(r => r.Id).ToList(), newState);
-        } else if (_lastFlag != AC_FLAG_TYPE.AC_NO_FLAG && e.Graphics.Flag == AC_FLAG_TYPE.AC_NO_FLAG)
+        } 
+        // When we change from a flag to no flag, then set the mode to the visualizer mode
+        else if (_lastFlag != AC_FLAG_TYPE.AC_NO_FLAG && e.Graphics.Flag == AC_FLAG_TYPE.AC_NO_FLAG)
         {
             var newState = new State
             {
                 Mode = 72,
-                Colors = new List<string> { "#000000", "#000000", "#000000" },
+                Colors = new List<string> { "#0000FF", "#000000", "#000000" },
                 Brightness = 255,
                 Speed = 2000
             };
             _connection.SendEvent(PhosSocketMessage.SetNetworkState, AcSelectedRooms.Select(r => r.Id).ToList(), newState);
         }
-        
+
         _lastFlag = e.Graphics.Flag;
-        // todo: Else show the RPM
+    }
+    
+    /**
+     * Displays the RPM of the car on the ledstrip in the selected rooms.
+     * Maps the RPM (0 - maxRPM received from StaticInfo), to 0 - 255 for the ledstrip.
+     */
+    private void OnPhysicsUpdated(object sender, PhysicsEventArgs e)
+    {
+        if (_connection is not { IsConnected: true })
+        {
+            return;
+        }
         
+        var fftValue = (int) Math.Round((e.Physics.Rpms / (float) _maxRpm) * 255);
+        _connection.SendEvent(PhosSocketMessage.SetFFTValue, AcSelectedRooms.Select(r => r.Id).ToList(), fftValue);
+    }
+
+    /**
+     * Stores the max rpm of this car for later use in the physics update.
+     */
+    private void OnStaticInfoUpdated(object sender, StaticInfoEventArgs e)
+    {
+        _maxRpm = e.StaticInfo.MaxRpm;
     }
     
     private void ACRoomListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
