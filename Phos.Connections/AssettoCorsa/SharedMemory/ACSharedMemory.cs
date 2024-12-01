@@ -18,23 +18,20 @@ namespace Phos.Connections.AssettoCorsa.SharedMemory
         }
     }
 
-    enum AC_MEMORY_STATUS { DISCONNECTED, CONNECTING, CONNECTED }
+    internal enum AcMemoryStatus { DISCONNECTED, CONNECTING, CONNECTED }
 
-    public class ACSharedMemory
+    public sealed class AcSharedMemory
     {
         private Timer sharedMemoryRetryTimer;
-        private AC_MEMORY_STATUS memoryStatus = AC_MEMORY_STATUS.DISCONNECTED;
-        public bool IsRunning { get { return (memoryStatus == AC_MEMORY_STATUS.CONNECTED); } }
+        private AcMemoryStatus memoryStatus = AcMemoryStatus.DISCONNECTED;
+        public bool IsRunning { get { return (memoryStatus == AcMemoryStatus.CONNECTED); } }
 
         private AC_STATUS gameStatus = AC_STATUS.AC_OFF;
 
-        public event GameStatusChangedHandler GameStatusChanged;
-        public virtual void OnGameStatusChanged(GameStatusEventArgs e)
+        public event GameStatusChangedHandler? GameStatusChanged;
+        public void OnGameStatusChanged(GameStatusEventArgs e)
         {
-            if (GameStatusChanged != null)
-            {
-                GameStatusChanged(this, e);
-            }
+            GameStatusChanged?.Invoke(this, e);
         }
 
         public static readonly Dictionary<AC_STATUS, string> StatusNameLookup = new Dictionary<AC_STATUS, string>
@@ -45,25 +42,25 @@ namespace Phos.Connections.AssettoCorsa.SharedMemory
             { AC_STATUS.AC_REPLAY, "Replay" },
         };
 
-        public ACSharedMemory()
+        public AcSharedMemory()
         {
             sharedMemoryRetryTimer = new Timer(2000);
             sharedMemoryRetryTimer.AutoReset = true;
             sharedMemoryRetryTimer.Elapsed += sharedMemoryRetryTimer_Elapsed;
 
-            physicsTimer = new Timer();
-            physicsTimer.AutoReset = true;
-            physicsTimer.Elapsed += physicsTimer_Elapsed;
+            _physicsTimer = new Timer();
+            _physicsTimer.AutoReset = true;
+            _physicsTimer.Elapsed += physicsTimer_Elapsed;
             PhysicsInterval = 10;
 
-            graphicsTimer = new Timer();
-            graphicsTimer.AutoReset = true;
-            graphicsTimer.Elapsed += graphicsTimer_Elapsed;
+            _graphicsTimer = new Timer();
+            _graphicsTimer.AutoReset = true;
+            _graphicsTimer.Elapsed += graphicsTimer_Elapsed;
             GraphicsInterval = 1000;
 
-            staticInfoTimer = new Timer();
-            staticInfoTimer.AutoReset = true;
-            staticInfoTimer.Elapsed += staticInfoTimer_Elapsed;
+            _staticInfoTimer = new Timer();
+            _staticInfoTimer.AutoReset = true;
+            _staticInfoTimer.Elapsed += staticInfoTimer_Elapsed;
             StaticInfoInterval = 1000;
 
             Stop();
@@ -86,32 +83,32 @@ namespace Phos.Connections.AssettoCorsa.SharedMemory
         {
             try
             {
-                memoryStatus = AC_MEMORY_STATUS.CONNECTING;
+                memoryStatus = AcMemoryStatus.CONNECTING;
                 // Connect to shared memory
-                physicsMMF = MemoryMappedFile.OpenExisting("Local\\acpmf_physics");
-                graphicsMMF = MemoryMappedFile.OpenExisting("Local\\acpmf_graphics");
-                staticInfoMMF = MemoryMappedFile.OpenExisting("Local\\acpmf_static");
+                _physicsMmf = MemoryMappedFile.OpenExisting("Local\\acpmf_physics");
+                _graphicsMmf = MemoryMappedFile.OpenExisting("Local\\acpmf_graphics");
+                _staticInfoMmf = MemoryMappedFile.OpenExisting("Local\\acpmf_static");
 
                 // Start the timers
-                staticInfoTimer.Start();
+                _staticInfoTimer.Start();
                 ProcessStaticInfo();
 
-                graphicsTimer.Start();
+                _graphicsTimer.Start();
                 ProcessGraphics();
 
-                physicsTimer.Start();
+                _physicsTimer.Start();
                 ProcessPhysics();
 
                 // Stop retry timer
                 sharedMemoryRetryTimer.Stop();
-                memoryStatus = AC_MEMORY_STATUS.CONNECTED;
+                memoryStatus = AcMemoryStatus.CONNECTED;
                 return true;
             }
             catch (FileNotFoundException)
             {
-                staticInfoTimer.Stop();
-                graphicsTimer.Stop();
-                physicsTimer.Stop();
+                _staticInfoTimer.Stop();
+                _graphicsTimer.Stop();
+                _physicsTimer.Stop();
                 return false;
             }
         }
@@ -121,13 +118,13 @@ namespace Phos.Connections.AssettoCorsa.SharedMemory
         /// </summary>
         public void Stop()
         {
-            memoryStatus = AC_MEMORY_STATUS.DISCONNECTED;
+            memoryStatus = AcMemoryStatus.DISCONNECTED;
             sharedMemoryRetryTimer.Stop();
 
             // Stop the timers
-            physicsTimer.Stop();
-            graphicsTimer.Stop();
-            staticInfoTimer.Stop();
+            _physicsTimer.Stop();
+            _graphicsTimer.Stop();
+            _staticInfoTimer.Stop();
         }
 
         /// <summary>
@@ -135,13 +132,10 @@ namespace Phos.Connections.AssettoCorsa.SharedMemory
         /// </summary>
         public double PhysicsInterval
         {
-            get
-            {
-                return physicsTimer.Interval;
-            }
+            get => _physicsTimer.Interval;
             set
             {
-                physicsTimer.Interval = value;
+                _physicsTimer.Interval = value;
             }
         }
 
@@ -150,13 +144,10 @@ namespace Phos.Connections.AssettoCorsa.SharedMemory
         /// </summary>
         public double GraphicsInterval
         {
-            get
-            {
-                return graphicsTimer.Interval;
-            }
+            get => _graphicsTimer.Interval;
             set
             {
-                graphicsTimer.Interval = value;
+                _graphicsTimer.Interval = value;
             }
         }
 
@@ -165,66 +156,62 @@ namespace Phos.Connections.AssettoCorsa.SharedMemory
         /// </summary>
         public double StaticInfoInterval
         {
-            get
-            {
-                return staticInfoTimer.Interval;
-            }
+            get => _staticInfoTimer.Interval;
             set
             {
-                staticInfoTimer.Interval = value;
+                _staticInfoTimer.Interval = value;
             }
         }
 
-        MemoryMappedFile physicsMMF;
-        MemoryMappedFile graphicsMMF;
-        MemoryMappedFile staticInfoMMF;
+        private MemoryMappedFile? _physicsMmf;
+        private MemoryMappedFile? _graphicsMmf;
+        private MemoryMappedFile? _staticInfoMmf;
 
-        Timer physicsTimer;
-        Timer graphicsTimer;
-        Timer staticInfoTimer;
+        private readonly Timer _physicsTimer;
+        private readonly Timer _graphicsTimer;
+        private readonly Timer _staticInfoTimer;
 
         /// <summary>
         /// Represents the method that will handle the physics update events
         /// </summary>
-        public event PhysicsUpdatedHandler PhysicsUpdated;
+        public event PhysicsUpdatedHandler? PhysicsUpdated;
 
         /// <summary>
         /// Represents the method that will handle the graphics update events
         /// </summary>
-        public event GraphicsUpdatedHandler GraphicsUpdated;
+        public event GraphicsUpdatedHandler? GraphicsUpdated;
 
         /// <summary>
         /// Represents the method that will handle the static info update events
         /// </summary>
-        public event StaticInfoUpdatedHandler StaticInfoUpdated;
+        public event StaticInfoUpdatedHandler? StaticInfoUpdated;
 
-        public virtual void OnPhysicsUpdated(PhysicsEventArgs e)
+        public void OnPhysicsUpdated(PhysicsEventArgs e)
         {
-            if (PhysicsUpdated != null)
-            {
-                PhysicsUpdated(this, e);
-            }
+            PhysicsUpdated?.Invoke(this, e);
         }
 
-        public virtual void OnGraphicsUpdated(GraphicsEventArgs e)
+        public void OnGraphicsUpdated(GraphicsEventArgs e)
         {
-            if (GraphicsUpdated != null)
+            if (GraphicsUpdated == null)
             {
-                GraphicsUpdated(this, e);
-                if (gameStatus != e.Graphics.Status)
-                {
-                    gameStatus = e.Graphics.Status;
-                    GameStatusChanged(this, new GameStatusEventArgs(gameStatus));
-                }
+                return;
             }
+            
+            GraphicsUpdated(this, e);
+            
+            if (gameStatus == e.Graphics.Status)
+            {
+                return;
+            }
+            
+            gameStatus = e.Graphics.Status;
+            GameStatusChanged?.Invoke(this, new GameStatusEventArgs(gameStatus));
         }
 
-        public virtual void OnStaticInfoUpdated(StaticInfoEventArgs e)
+        public void OnStaticInfoUpdated(StaticInfoEventArgs e)
         {
-            if (StaticInfoUpdated != null)
-            {
-                StaticInfoUpdated(this, e);
-            }
+            StaticInfoUpdated?.Invoke(this, e);
         }
 
         private void physicsTimer_Elapsed(object sender, ElapsedEventArgs e)
@@ -244,12 +231,14 @@ namespace Phos.Connections.AssettoCorsa.SharedMemory
 
         private void ProcessPhysics()
         {
-            if (memoryStatus == AC_MEMORY_STATUS.DISCONNECTED)
+            if (memoryStatus == AcMemoryStatus.DISCONNECTED)
+            {
                 return;
+            }   
 
             try
             {
-                Physics physics = ReadPhysics();
+                var physics = ReadPhysics();
                 OnPhysicsUpdated(new PhysicsEventArgs(physics));
             }
             catch (AssettoCorsaNotStartedException)
@@ -258,12 +247,14 @@ namespace Phos.Connections.AssettoCorsa.SharedMemory
 
         private void ProcessGraphics()
         {
-            if (memoryStatus == AC_MEMORY_STATUS.DISCONNECTED)
+            if (memoryStatus == AcMemoryStatus.DISCONNECTED)
+            {
                 return;
+            }
 
             try
             {
-                Graphics graphics = ReadGraphics();
+                var graphics = ReadGraphics();
                 OnGraphicsUpdated(new GraphicsEventArgs(graphics));
             }
             catch (AssettoCorsaNotStartedException)
@@ -272,12 +263,14 @@ namespace Phos.Connections.AssettoCorsa.SharedMemory
 
         private void ProcessStaticInfo()
         {
-            if (memoryStatus == AC_MEMORY_STATUS.DISCONNECTED)
+            if (memoryStatus == AcMemoryStatus.DISCONNECTED)
+            {
                 return;
+            }   
 
             try
             {
-                StaticInfo staticInfo = ReadStaticInfo();
+                var staticInfo = ReadStaticInfo();
                 OnStaticInfoUpdated(new StaticInfoEventArgs(staticInfo));
             }
             catch (AssettoCorsaNotStartedException)
@@ -288,12 +281,12 @@ namespace Phos.Connections.AssettoCorsa.SharedMemory
         /// Read the current physics data from shared memory
         /// </summary>
         /// <returns>A Physics object representing the current status, or null if not available</returns>
-        public Physics ReadPhysics()
+        private Physics ReadPhysics()
         {
-            if (memoryStatus == AC_MEMORY_STATUS.DISCONNECTED || physicsMMF == null)
+            if (memoryStatus == AcMemoryStatus.DISCONNECTED || _physicsMmf == null)
                 throw new AssettoCorsaNotStartedException();
 
-            using (var stream = physicsMMF.CreateViewStream())
+            using (var stream = _physicsMmf.CreateViewStream())
             {
                 using (var reader = new BinaryReader(stream))
                 {
@@ -307,12 +300,14 @@ namespace Phos.Connections.AssettoCorsa.SharedMemory
             }
         }
 
-        public Graphics ReadGraphics()
+        private Graphics ReadGraphics()
         {
-            if (memoryStatus == AC_MEMORY_STATUS.DISCONNECTED || graphicsMMF == null)
+            if (memoryStatus == AcMemoryStatus.DISCONNECTED || _graphicsMmf == null)
+            {
                 throw new AssettoCorsaNotStartedException();
+            }
 
-            using (var stream = graphicsMMF.CreateViewStream())
+            using (var stream = _graphicsMmf.CreateViewStream())
             {
                 using (var reader = new BinaryReader(stream))
                 {
@@ -326,12 +321,14 @@ namespace Phos.Connections.AssettoCorsa.SharedMemory
             }
         }
 
-        public StaticInfo ReadStaticInfo()
+        private StaticInfo ReadStaticInfo()
         {
-            if (memoryStatus == AC_MEMORY_STATUS.DISCONNECTED || staticInfoMMF == null)
+            if (memoryStatus == AcMemoryStatus.DISCONNECTED || _staticInfoMmf == null)
+            {
                 throw new AssettoCorsaNotStartedException();
+            }
 
-            using (var stream = staticInfoMMF.CreateViewStream())
+            using (var stream = _staticInfoMmf.CreateViewStream())
             {
                 using (var reader = new BinaryReader(stream))
                 {
