@@ -7,7 +7,13 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <TabControl>
-        <TabItem Header="Main">
+        <TabItem Header="Connection">
+            <StackPanel>
+                <TextBox x:Name="WebSocketInput" Width="200" Height="30" Text="ws://api.phos.steinjonker.nl" Margin="0,0,0,10" />
+                <Button Content="Connect" Click="ConnectWebSocket" Width="200" Height="30" Margin="0,0,0,10" />
+            </StackPanel>
+        </TabItem>
+        <TabItem Header="ScreenSync">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" MaxHeight="200" />
@@ -32,11 +38,9 @@
                     DisplayMemberPath="Name"
                     SelectionMode="Extended" />
                 <StackPanel Grid.Row="0" Grid.Column="2">
-                    <TextBox x:Name="WebSocketInput" Width="200" Height="30" Text="ws://api.phos.steinjonker.nl"
-                             Margin="0,0,0,10" />
-                    <Button Content="Connect" Click="ConnectWebSocket" Width="200" Height="30" Margin="0,0,0,10" />
                     <Button Content="Select Area" Click="SelectArea" Width="200" Height="50" Margin="0,0,0,10" />
-                    <Button Content="{Binding CaptureButtonText}" IsEnabled="{Binding CanStartCapture}"
+                    <Button Content="{Binding CaptureButtonText}"
+                            IsEnabled="{Binding CanStartCapture}"
                             Click="ToggleScreenCapture" Width="200" Height="50" />
                 </StackPanel>
                 <Image x:Name="ScreenImage" Grid.Row="1" Grid.ColumnSpan="3" />
@@ -49,7 +53,7 @@
                     SelectionChanged="ACRoomListBox_SelectionChanged"
                     DisplayMemberPath="Name"
                     SelectionMode="Extended" />
-                <Button Name="StartStopIntegrationButton" Content="Start Integration" Click="ToggleAssettoCorsaIntegration" />
+                <Button Margin="0 15 0 0" Name="StartStopIntegrationButton" Content="Start Integration" Click="ToggleAssettoCorsaIntegration" />
             </StackPanel>
         </TabItem>
     </TabControl>

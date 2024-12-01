@@ -327,7 +327,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        // If the RPM is below 90% of max RPM, set the LED strip value to 0 (off)
+        // If the RPM is outside the threshold of max RPM, set the LED strip value to 0 (off)
         if (actualRpm < minRpmThreshold)
         {
             _connection.SendEvent(PhosSocketMessage.SetFFTValue, AcSelectedRooms.Select(r => r.Id).ToList(), 0);
