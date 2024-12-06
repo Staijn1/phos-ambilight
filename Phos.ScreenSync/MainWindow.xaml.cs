@@ -213,6 +213,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private int _maxRpm = 0;
     private int _lastMappedRpm = 0;
     private float _lastActualRpm = 0;
+    private int _currentVisualizationMode = 72;
     public IEnumerable<Room> AcSelectedRooms { get; set; } = [];
 
     private void ToggleAssettoCorsaIntegration(object sender, RoutedEventArgs e)
@@ -228,16 +229,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             // Start the integration
             _assettoCorsaSharedMemory.Start();
-            _connection?.SendEvent(PhosSocketMessage.SetNetworkState, AcSelectedRooms.Select(r => r.Id).ToList(), new State
-            {
-                Mode = 72,
-                Colors = new List<string> { "#0000FF", "#000000", "#000000" },
-                Brightness = 255,
-                Speed = 2000
-            });
+            PrepareRoomForAssettoCorsaIntegration();
             StartStopIntegrationButton.Content = "Stop Integration";
             _isAssettoCorsaIntegrationRunning = true;
         }
+    }
+
+    private void PrepareRoomForAssettoCorsaIntegration()
+    {
+        _connection?.SendEvent(PhosSocketMessage.SetNetworkState, AcSelectedRooms.Select(r => r.Id).ToList(), new State
+        {
+            Mode = _currentVisualizationMode,
+            Colors = new List<string> { "#0000FF", "#000000", "#000000" },
+            Brightness = 255,
+            Speed = 2000
+        });
     }
 
     /**
@@ -367,6 +373,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         AcSelectedRooms = AcAvailableRoomsListBox.SelectedItems.Cast<Room>();
     }
 
+    private void AcVisualizationModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (VisualizationModeComboBox.SelectedItem is ComboBoxItem selectedItem && int.TryParse((string)selectedItem.Tag, out var mode))
+        {
+            _currentVisualizationMode = mode;
+            this.PrepareRoomForAssettoCorsaIntegration();
+        }
+    }
 
     #endregion
+
 }

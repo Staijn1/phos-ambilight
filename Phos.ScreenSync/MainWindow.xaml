@@ -54,6 +54,12 @@
                     DisplayMemberPath="Name"
                     SelectionMode="Extended" />
                 <Button Margin="0 15 0 0" Name="StartStopIntegrationButton" Content="Start Integration" Click="ToggleAssettoCorsaIntegration" />
+                <ComboBox x:Name="VisualizationModeComboBox" Width="200" Height="30" Margin="0,0,0,10"
+                          SelectionChanged="AcVisualizationModeComboBox_SelectionChanged">
+                    <ComboBoxItem Content="Mode 72" Tag="72" />
+                    <ComboBoxItem Content="Mode 74" Tag="74" />
+                    <ComboBoxItem Content="Mode 75" Tag="75" />
+                </ComboBox>
             </StackPanel>
         </TabItem>
     </TabControl>
