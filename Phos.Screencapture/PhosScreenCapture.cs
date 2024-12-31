@@ -6,8 +6,8 @@ namespace Phos.Screencapture;
 
 public class PhosScreenCapture
 {
-    private DX11ScreenCaptureService _screenCaptureService = new DX11ScreenCaptureService();
-    private IEnumerable<GraphicsCard> _graphicsCards;
+    private readonly DX11ScreenCaptureService _screenCaptureService = new DX11ScreenCaptureService();
+    private readonly IEnumerable<GraphicsCard> _graphicsCards;
     private DX11ScreenCapture? _screenCapture;
     private CaptureZone<ColorBGRA>? _captureZone;
 
@@ -26,9 +26,16 @@ public class PhosScreenCapture
         return _screenCaptureService.GetDisplays(_graphicsCards.First());
     }
 
-    public void SelectDisplay(Display display)
+    public void SelectDisplay(Display? display)
     {
-        _screenCapture = _screenCaptureService.GetScreenCapture(display);
+        if (!display.HasValue)
+        {
+            _screenCapture = null;
+            return;
+        }
+        
+        
+        _screenCapture = _screenCaptureService.GetScreenCapture(display.Value);
     }
 
     /// <summary>
@@ -40,7 +47,7 @@ public class PhosScreenCapture
     /// <param name="height"></param>
     public void CreateCaptureZone(int fromX, int fromY, int width, int height)
     {
-        if (_screenCapture == null) throw new Exception("No display selected");
+        if (_screenCapture == null) throw new InvalidOperationException("No display selected");
 
         // Remove old capture zone
         if (_captureZone != null)
@@ -54,8 +61,8 @@ public class PhosScreenCapture
 
     public RefImage<ColorBGRA> GetImage()
     {
-        if (_captureZone == null) throw new Exception("No capture zone created");
-        if (_screenCapture == null) throw new Exception("No display selected");
+        if (_captureZone == null) throw new InvalidOperationException("No capture zone created");
+        if (_screenCapture == null) throw new InvalidOperationException("No display selected");
         
         _screenCapture.CaptureScreen();
         

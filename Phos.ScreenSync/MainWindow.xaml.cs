@@ -18,14 +18,24 @@ namespace Phos.ScreenSync;
 public partial class MainWindow : Window, INotifyPropertyChanged
 {
     private bool HasCustomAreaSelected { get; set; } = false;
-    private bool _isScreenSelected = false;
     private bool _isCapturing = false;
-    private AcSharedMemory _assettoCorsaSharedMemory;
+    private readonly AcSharedMemory _assettoCorsaSharedMemory;
     private bool _isAssettoCorsaIntegrationRunning = false;
-    private Display _selectedDisplay;
+    private Display? _selectedDisplay;
+    public Display? SelectedDisplay
+    {
+        get => _selectedDisplay;
+        set
+        {
+            _selectedDisplay = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CanSelectArea));
+        }
+    }
+    
     private PhosSocketIOClient? _connection;
     private readonly PhosScreenCapture _screenCapture;
-    private Task? screenCaptureThread;
+    private Task? _screenCaptureThread;
     private readonly SettingsManager<UserSettings> _settingsManager;
     private bool _isConnected;
     public bool IsConnected
@@ -37,15 +47,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             OnPropertyChanged();
         }
     }
+    public bool CanSelectArea => SelectedDisplay.HasValue;
+    
     private List<Room> ScreenSyncSelectedRooms { get; set; } = [];
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public string CaptureButtonText => _isCapturing ? "Stop Capture" : "Start Capture";
 
-    public bool CanStartCapture
-    {
-        get => _selectedDisplay != null && ScreenSyncSelectedRooms?.Count > 0;
-    }
+    public bool CanStartCapture => _selectedDisplay.HasValue && ScreenSyncSelectedRooms?.Count > 0;
 
 
     public MainWindow(PhosScreenCapture screenCapture)
@@ -134,19 +143,24 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public void ScreenSyncDisplayListBoxSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        _selectedDisplay = (Display)AvailableDisplayListBox.SelectedItem;
-        _screenCapture.SelectDisplay(_selectedDisplay);
+        SelectedDisplay = (Display)AvailableDisplayListBox.SelectedItem;
+        _screenCapture.SelectDisplay(SelectedDisplay);
     }
 
     public void ToggleScreenCapture(object sender, RoutedEventArgs e)
     {
+        if (!_selectedDisplay.HasValue)
+        {
+            return;
+        }
+        
         if (_isCapturing)
         {
             // Stop capturing
             _isCapturing = false;
             // Stop capture thread
-            screenCaptureThread?.Wait();
-            screenCaptureThread = null;
+            _screenCaptureThread?.Wait();
+            _screenCaptureThread = null;
             Console.WriteLine("Stopped capturing.");
         }
         else
@@ -157,11 +171,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             if (!HasCustomAreaSelected)
             {
-                _screenCapture.CreateCaptureZone(0, 0, _selectedDisplay.Width, _selectedDisplay.Height);
+                _screenCapture.CreateCaptureZone(0, 0, _selectedDisplay.Value.Width, _selectedDisplay.Value.Height);
             }
 
             // Start the screen capture on a new thread
-            screenCaptureThread = Task.Run(StartScreenCapture);
+            _screenCaptureThread = Task.Run(StartScreenCapture);
         }
 
         OnPropertyChanged(nameof(CaptureButtonText));

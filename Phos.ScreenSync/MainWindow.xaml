@@ -11,6 +11,18 @@
             <StackPanel>
                 <TextBox x:Name="WebSocketInput" Width="200" Height="30" Text="ws://api.phos.steinjonker.nl" Margin="0,0,0,10" />
                 <Button Content="Connect" Click="ConnectWebSocket" Width="200" Height="30" Margin="0,0,0,10" />
+                <TextBlock Width="200" Height="30" HorizontalAlignment="Center">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="Status: Disconnected" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                    <Setter Property="Text" Value="Status: Connected" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
             </StackPanel>
         </TabItem>
         <TabItem Header="ScreenSync" IsEnabled="{Binding IsConnected}">
@@ -38,7 +50,7 @@
                     DisplayMemberPath="Name"
                     SelectionMode="Extended" />
                 <StackPanel Grid.Row="0" Grid.Column="2">
-                    <Button Content="Select Area" Click="SelectArea" Width="200" Height="50" Margin="0,0,0,10" />
+                    <Button Content="Select Area" Click="SelectArea" Width="200" Height="50" Margin="0,0,0,10" IsEnabled="{Binding CanSelectArea}" />
                     <Button Content="{Binding CaptureButtonText}"
                             IsEnabled="{Binding CanStartCapture}"
                             Click="ToggleScreenCapture" Width="200" Height="50" />
