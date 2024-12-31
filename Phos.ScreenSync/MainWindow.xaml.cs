@@ -27,7 +27,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly PhosScreenCapture _screenCapture;
     private Task? screenCaptureThread;
     private readonly SettingsManager<UserSettings> _settingsManager;
-
+    private bool _isConnected;
+    public bool IsConnected
+    {
+        get => _isConnected;
+        set
+        {
+            _isConnected = value;
+            OnPropertyChanged();
+        }
+    }
     private List<Room> ScreenSyncSelectedRooms { get; set; } = [];
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -67,6 +76,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void ConnectWebSocket(object o, RoutedEventArgs routedEventArgs)
     {
+        // If we are already connected, disconnect and then reconnect.
+        if (_connection != null && IsConnected)
+        {
+            var task = Task.Run(() => _connection.Disconnect());
+            task.Wait();
+        }
+        
+        
         var deviceName = "Phos Screensync - " + Environment.MachineName;
         var url = WebSocketInput.Text;
         // Save the WebSocket URL to the settings
@@ -84,17 +101,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         _connection.OnConnect += async (sender, args) =>
         {
-            // First register ourselves as a user
+            IsConnected = true; // Update the property when connected
             await _connection.SendEvent(PhosSocketMessage.RegisterAsUser);
             var response = await _connection.SendEvent(PhosSocketMessage.GetNetworkState);
-
             var networkState = response.GetValue<NetworkState>();
             OnNewNetworkState(networkState);
         };
+
         _connection.OnDisconnect += (sender, args) =>
         {
+            IsConnected = false; // Update the property when disconnected
             Console.WriteLine("Disconnected from server");
         };
+
         _connection.OnDatabaseChange += (sender, response) => { Console.WriteLine("Database change event received"); };
     }
 

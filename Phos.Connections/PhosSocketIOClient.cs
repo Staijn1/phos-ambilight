@@ -25,7 +25,11 @@ public class PhosSocketIOClient
     }
 
 
-
+    public virtual async Task Disconnect()
+    {
+        await client.DisconnectAsync();
+    }
+    
     public virtual void OnConnected(object? sender, EventArgs e)
     {
         Console.WriteLine("Connected to server!");

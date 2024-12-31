@@ -13,7 +13,7 @@
                 <Button Content="Connect" Click="ConnectWebSocket" Width="200" Height="30" Margin="0,0,0,10" />
             </StackPanel>
         </TabItem>
-        <TabItem Header="ScreenSync">
+        <TabItem Header="ScreenSync" IsEnabled="{Binding IsConnected}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" MaxHeight="200" />
@@ -46,7 +46,7 @@
                 <Image x:Name="ScreenImage" Grid.Row="1" Grid.ColumnSpan="3" />
             </Grid>
         </TabItem>
-        <TabItem Header="Assetto Corsa">
+        <TabItem Header="Assetto Corsa" IsEnabled="{Binding IsConnected}">
             <StackPanel>
                 <ListBox
                     x:Name="AcAvailableRoomsListBox"
