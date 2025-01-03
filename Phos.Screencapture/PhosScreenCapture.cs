@@ -99,6 +99,16 @@ public class PhosScreenCapture
         return new ColorRGB(avgR, avgG, avgB);
     }
 
+    public Dictionary<string, ColorRGB> GetColorForEachAlgorithm()
+    {
+        Dictionary<string, ColorRGB> colors = new Dictionary<string, ColorRGB>();
+        
+        // Current algo
+        colors.Add("Average Color", GetAverageColorInArea());
+
+        return colors;
+    }
+
     public BitmapSource GetImageAsBitmap()
     {
         var rawData = this.GetRawData();

@@ -17,6 +17,7 @@ namespace Phos.ScreenSync;
 /// </summary>
 public partial class MainWindow : Window, INotifyPropertyChanged
 {
+    private readonly ImageWriter _writer = new ImageWriter();
     private bool HasCustomAreaSelected { get; set; } = false;
     private bool _isCapturing = false;
     private readonly AcSharedMemory _assettoCorsaSharedMemory;
@@ -72,11 +73,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         DataContext = this;
         
-        _assettoCorsaSharedMemory = new AcSharedMemory();
-        _assettoCorsaSharedMemory.GraphicsInterval = 100; // 100ms
+        _assettoCorsaSharedMemory = new AcSharedMemory
+        {
+            GraphicsInterval = 100 // 100ms
+        };
         _assettoCorsaSharedMemory.GraphicsUpdated += OnGraphicsUpdated;
         
-        _assettoCorsaSharedMemory.PhysicsInterval = 1; // 50ms
+        _assettoCorsaSharedMemory.PhysicsInterval = 1;
         _assettoCorsaSharedMemory.PhysicsUpdated += OnPhysicsUpdated;
         
         _assettoCorsaSharedMemory.StaticInfoInterval = 2500; // 2.5s
@@ -191,6 +194,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             Console.WriteLine("Capturing...");
             var averageColor = _screenCapture.GetAverageColorInArea();
+            
             var colors = newState.Colors;
             colors[0] = ColorUtils.ColorRGBToHex(averageColor);
             newState.Colors = colors;
@@ -198,6 +202,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             // Update the Image control on the UI thread
             Dispatcher.Invoke(new Action(() => { ScreenImage.Source = _screenCapture.GetImageAsBitmap(); }));
+            var tmpCOlors = _screenCapture.GetColorForEachAlgorithm();
+
+            await _writer.CreateImage(tmpCOlors);
         }
     }
 
@@ -229,7 +236,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         OnPropertyChanged(nameof(CanStartCapture));
     }
 
-    public void SelectArea(object sender, RoutedEventArgs e)
+    private void SelectArea(object sender, RoutedEventArgs e)
     {
         var overlayWindow = new OverlayWindow();
         overlayWindow.AreaSelected += (x, y, w, h) =>
