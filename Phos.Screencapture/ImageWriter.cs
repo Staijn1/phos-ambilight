@@ -27,15 +27,20 @@ public class ImageWriter
         }
         else
         {
+            Console.WriteLine("Purging images directory");
             // Purge the directory
-            
+            foreach (var file in Directory.GetFiles(outputDirectory))
+            {
+                File.Delete(file);
+            }
+            Console.WriteLine("Done!");
         }
     }
 
     public async Task CreateImage(Dictionary<string, ColorRGB> algorithmColorDict)
     {
-        var width = 800; // Default image width
-        var height = 800; // Fixed image height
+        const int width = 800; // Default image width
+        const int height = 800; // Fixed image height
         var rowHeight = height / algorithmColorDict.Count; // Calculate row height based on the number of algorithms
 
         using (var bitmap = new Bitmap(width, height))
