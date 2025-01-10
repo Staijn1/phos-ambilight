@@ -125,8 +125,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             IsConnected = false; // Update the property when disconnected
             Console.WriteLine("Disconnected from server");
         };
-
-        _connection.OnDatabaseChange += (sender, response) => { Console.WriteLine("Database change event received"); };
     }
 
     /// <summary>
@@ -193,7 +191,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         while (_isCapturing && _connection != null && _connection.IsConnected)
         {
             Console.WriteLine("Capturing...");
-            var averageColor = _screenCapture.GetAverageColorInArea();
+            var averageColor = PhosScreenCapture.GetAverageColorInArea(_screenCapture.GetImage());
             
             var colors = newState.Colors;
             colors[0] = ColorUtils.ColorRGBToHex(averageColor);
@@ -202,9 +200,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             // Update the Image control on the UI thread
             Dispatcher.Invoke(new Action(() => { ScreenImage.Source = _screenCapture.GetImageAsBitmap(); }));
-            var tmpCOlors = _screenCapture.GetColorForEachAlgorithm();
+            var colorForEachAlgorithm = _screenCapture.GetColorForEachAlgorithm();
 
-            await _writer.CreateImage(tmpCOlors);
+            await _writer.CreateImage(colorForEachAlgorithm);
         }
     }
 
@@ -424,4 +422,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     #endregion
 
+    private void Window_Closing(object? sender, CancelEventArgs e)
+    {
+        _writer.CreateGifFromImages();
+    }
 }

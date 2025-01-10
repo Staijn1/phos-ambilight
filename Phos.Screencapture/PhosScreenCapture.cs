@@ -1,6 +1,8 @@
-﻿using System.Windows.Media;
+﻿using System.Drawing;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ScreenCapture.NET;
+using Color = System.Windows.Media.Color;
 
 namespace Phos.Screencapture;
 
@@ -74,9 +76,8 @@ public class PhosScreenCapture
         }
     }
 
-    public ColorRGB GetAverageColorInArea()
+    public static ColorRGB GetAverageColorInArea(RefImage<ColorBGRA> image)
     {
-        var image = GetImage();
         long totalR = 0, totalG = 0, totalB = 0, totalA = 0;
         int pixelCount = image.Width * image.Height;
 
@@ -102,12 +103,20 @@ public class PhosScreenCapture
     public Dictionary<string, ColorRGB> GetColorForEachAlgorithm()
     {
         Dictionary<string, ColorRGB> colors = new Dictionary<string, ColorRGB>();
-        
-        // Current algo
-        colors.Add("Average Color", GetAverageColorInArea());
+        var image = GetImage();
+        // Add colors computed by different algorithms
+        colors.Add("Average Color", GetAverageColorInArea(image));
+        colors.Add("Weighted Average", GetWeightedAverageColor(image));
+        colors.Add("Dominant Color", GetDominantColor(image));
+        colors.Add("Spatial Average (Grid 10x10)", GetSpatialAverageColor(image, gridSize: 10));
+        colors.Add("Histogram-Based Color", GetHistogramBasedColor(image));
+        colors.Add("Brightness-Weighted Average", GetBrightnessWeightedAverageColor(image));
+        colors.Add("Region-Specific Color (Top Half)", GetRegionSpecificColors(image, regions: 2).First());
+        colors.Add("Edge-Weighted Average", GetEdgeWeightedAverageColor(image));
 
         return colors;
     }
+
 
     public BitmapSource GetImageAsBitmap()
     {
@@ -137,4 +146,205 @@ public class PhosScreenCapture
             return rawData;
         }
     }
+    
+    #region Algorithms
+
+    public static ColorRGB GetWeightedAverageColor(RefImage<ColorBGRA> image)
+    {
+        long totalR = 0, totalG = 0, totalB = 0;
+        int pixelCount = image.Width * image.Height;
+
+        for (int y = 0; y < image.Height; y++)
+        {
+            for (int x = 0; x < image.Width; x++)
+            {
+                ref readonly var pixel = ref image[x, y];
+                totalR += (long)(pixel.R * 0.299);
+                totalG += (long)(pixel.G * 0.587);
+                totalB += (long)(pixel.B * 0.114);
+            }
+        }
+
+        byte avgR = (byte)(totalR / pixelCount);
+        byte avgG = (byte)(totalG / pixelCount);
+        byte avgB = (byte)(totalB / pixelCount);
+
+        return new ColorRGB(avgR, avgG, avgB);
+    }
+
+    public static ColorRGB GetDominantColor(RefImage<ColorBGRA> image)
+    {
+        var colorCounts = new Dictionary<ColorBGRA, int>();
+
+        for (int y = 0; y < image.Height; y++)
+        {
+            for (int x = 0; x < image.Width; x++)
+            {
+                ref readonly var pixel = ref image[x, y];
+                if (colorCounts.ContainsKey(pixel))
+                    colorCounts[pixel]++;
+                else
+                    colorCounts[pixel] = 1;
+            }
+        }
+
+        var mostFrequentColor = colorCounts.OrderByDescending(c => c.Value).First().Key;
+        return new ColorRGB(mostFrequentColor.R, mostFrequentColor.G, mostFrequentColor.B);
+    }
+
+    public static ColorRGB GetSpatialAverageColor(RefImage<ColorBGRA> image, int gridSize)
+    {
+        long totalR = 0, totalG = 0, totalB = 0;
+        int sampledPixels = 0;
+
+        for (int y = 0; y < image.Height; y += gridSize)
+        {
+            for (int x = 0; x < image.Width; x += gridSize)
+            {
+                ref readonly var pixel = ref image[x, y];
+                totalR += pixel.R;
+                totalG += pixel.G;
+                totalB += pixel.B;
+                sampledPixels++;
+            }
+        }
+
+        if (sampledPixels == 0)
+        {
+            Console.WriteLine("GetSpatialAverageColor defaulting to AverageColor");
+            return GetAverageColorInArea(image);
+        }
+        byte avgR = (byte)(totalR / sampledPixels);
+        byte avgG = (byte)(totalG / sampledPixels);
+        byte avgB = (byte)(totalB / sampledPixels);
+
+        return new ColorRGB(avgR, avgG, avgB);
+    }
+
+    public static ColorRGB GetHistogramBasedColor(RefImage<ColorBGRA> image)
+    {
+        var colorCounts = new Dictionary<ColorBGRA, int>();
+
+        for (int y = 0; y < image.Height; y++)
+        {
+            for (int x = 0; x < image.Width; x++)
+            {
+                ref readonly var pixel = ref image[x, y];
+                if (colorCounts.ContainsKey(pixel))
+                    colorCounts[pixel]++;
+                else
+                    colorCounts[pixel] = 1;
+            }
+        }
+
+        var mostFrequentColor = colorCounts.OrderByDescending(c => c.Value).First().Key;
+        return new ColorRGB(mostFrequentColor.R, mostFrequentColor.G, mostFrequentColor.B);
+    }
+    public static ColorRGB GetBrightnessWeightedAverageColor(RefImage<ColorBGRA> image)
+    {
+        long totalR = 0, totalG = 0, totalB = 0, totalWeight = 0;
+
+        for (int y = 0; y < image.Height; y++)
+        {
+            for (int x = 0; x < image.Width; x++)
+            {
+                ref readonly var pixel = ref image[x, y];
+                int brightness = (pixel.R + pixel.G + pixel.B) / 3;
+
+                totalR += pixel.R * brightness;
+                totalG += pixel.G * brightness;
+                totalB += pixel.B * brightness;
+                totalWeight += brightness;
+            }
+        }
+
+        if (totalWeight == 0)
+        {
+            Console.WriteLine("BrightnessWeightedAverageColor defaulting to AverageColor");
+            return GetAverageColorInArea(image);
+        }
+        
+        byte avgR = (byte)(totalR / totalWeight);
+        byte avgG = (byte)(totalG / totalWeight);
+        byte avgB = (byte)(totalB / totalWeight);
+
+        return new ColorRGB(avgR, avgG, avgB);
+    }
+
+    public static List<ColorRGB> GetRegionSpecificColors(RefImage<ColorBGRA> image, int regions)
+    {
+        int regionHeight = image.Height / regions;
+        List<ColorRGB> colors = new List<ColorRGB>();
+
+        for (int r = 0; r < regions; r++)
+        {
+            int startY = r * regionHeight;
+            int endY = Math.Min(startY + regionHeight, image.Height);
+
+            long totalR = 0, totalG = 0, totalB = 0;
+            int pixelCount = 0;
+
+            for (int y = startY; y < endY; y++)
+            {
+                for (int x = 0; x < image.Width; x++)
+                {
+                    ref readonly var pixel = ref image[x, y];
+                    totalR += pixel.R;
+                    totalG += pixel.G;
+                    totalB += pixel.B;
+                    pixelCount++;
+                }
+            }
+
+            colors.Add(new ColorRGB((byte)(totalR / pixelCount), (byte)(totalG / pixelCount), (byte)(totalB / pixelCount)));
+        }
+
+        return colors;
+    }
+
+    
+    public static ColorRGB GetEdgeWeightedAverageColor(RefImage<ColorBGRA> image)
+    {
+        long totalR = 0, totalG = 0, totalB = 0;
+        var edgePixels = 0;
+
+        for (var y = 1; y < image.Height - 1; y++)
+        {
+            for (var x = 1; x < image.Width - 1; x++)
+            {
+                ref readonly var pixel = ref image[x, y];
+
+                var dx = Math.Abs(pixel.R - image[x + 1, y].R) +
+                         Math.Abs(pixel.G - image[x + 1, y].G) +
+                         Math.Abs(pixel.B - image[x + 1, y].B);
+
+                var dy = Math.Abs(pixel.R - image[x, y + 1].R) +
+                         Math.Abs(pixel.G - image[x, y + 1].G) +
+                         Math.Abs(pixel.B - image[x, y + 1].B);
+
+                if (dx + dy > 128) // Edge threshold
+                {
+                    totalR += pixel.R;
+                    totalG += pixel.G;
+                    totalB += pixel.B;
+                    edgePixels++;
+                }
+            }
+        }
+
+        if (edgePixels == 0) // Avoid divide-by-zero
+        {
+            Console.WriteLine("GetEdgeWeightedAverageColor defaulting to AverageColor");
+            return GetAverageColorInArea(image); // Fallback to average color
+        }
+
+        
+        byte avgR = (byte)(totalR / edgePixels);
+        byte avgG = (byte)(totalG / edgePixels);
+        byte avgB = (byte)(totalB / edgePixels);
+
+        return new ColorRGB(avgR, avgG, avgB);
+    }
+
+    #endregion
 }
