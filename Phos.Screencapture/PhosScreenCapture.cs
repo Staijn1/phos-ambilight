@@ -106,7 +106,7 @@ public class PhosScreenCapture
         var image = GetImage();
         // Add colors computed by different algorithms
         colors.Add("Average Color", GetAverageColorInArea(image));
-        colors.Add("Weighted Average", GetWeightedAverageColor(image));
+        // colors.Add("Weighted Average", GetWeightedAverageColor(image));
         colors.Add("Dominant Color", GetDominantColor(image));
         colors.Add("Spatial Average (Grid 10x10)", GetSpatialAverageColor(image, gridSize: 10));
         colors.Add("Histogram-Based Color", GetHistogramBasedColor(image));
