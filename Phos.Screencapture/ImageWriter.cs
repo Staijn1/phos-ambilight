@@ -76,7 +76,7 @@ public class ImageWriter
             // Add frame count in the top right corner
             image.Mutate(ctx => ctx.DrawText($"Frame: {frameCount}", new Font(SystemFonts.Get("Arial"), 16), Color.Blue, new PointF(width - 150, 10)));
 
-            var filePath = Path.Combine(imagesDirectory, $"frame_{frameCount}.png");
+            var filePath = Path.Combine(imagesDirectory, $"frame_{frameCount.ToString("D6")}.png");
             await image.SaveAsync(filePath);
             frameCount++;
         }
@@ -124,6 +124,7 @@ public class ImageWriter
         }
 
         var gifPath = Path.Combine(gifsDirectory, "output.gif");
+        Console.WriteLine("Saving gif...");
         gif.Save(gifPath, gifEncoder);
 
         Console.WriteLine($"GIF created successfully: {gifPath}");
