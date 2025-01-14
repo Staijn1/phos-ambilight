@@ -172,26 +172,6 @@ public class PhosScreenCapture
         return new ColorRGB(avgR, avgG, avgB);
     }
 
-    public static ColorRGB GetDominantColor(RefImage<ColorBGRA> image)
-    {
-        var colorCounts = new Dictionary<ColorBGRA, int>();
-
-        for (int y = 0; y < image.Height; y++)
-        {
-            for (int x = 0; x < image.Width; x++)
-            {
-                ref readonly var pixel = ref image[x, y];
-                if (colorCounts.ContainsKey(pixel))
-                    colorCounts[pixel]++;
-                else
-                    colorCounts[pixel] = 1;
-            }
-        }
-
-        var mostFrequentColor = colorCounts.OrderByDescending(c => c.Value).First().Key;
-        return new ColorRGB(mostFrequentColor.R, mostFrequentColor.G, mostFrequentColor.B);
-    }
-
     public static ColorRGB GetSpatialAverageColor(RefImage<ColorBGRA> image, int gridSize)
     {
         long totalR = 0, totalG = 0, totalB = 0;
@@ -346,5 +326,53 @@ public class PhosScreenCapture
         return new ColorRGB(avgR, avgG, avgB);
     }
 
+    public static ColorRGB GetDominantColor(RefImage<ColorBGRA> image)
+    {
+        var colorCounts = new Dictionary<ColorBGRA, int>(new ColorBgraEqualityComparer());
+
+        for (int y = 0; y < image.Height; y++)
+        {
+            for (int x = 0; x < image.Width; x++)
+            {
+                ref readonly var pixel = ref image[x, y];
+                if (colorCounts.TryGetValue(pixel, out var count))
+                {
+                    colorCounts[pixel] = count + 1;
+                }
+                else
+                {
+                    colorCounts[pixel] = 1;
+                }
+            }
+        }
+
+        ColorBGRA mostFrequentColor = default;
+        int maxCount = 0;
+
+        foreach (var kvp in colorCounts)
+        {
+            if (kvp.Value > maxCount)
+            {
+                maxCount = kvp.Value;
+                mostFrequentColor = kvp.Key;
+            }
+        }
+
+        return new ColorRGB(mostFrequentColor.R, mostFrequentColor.G, mostFrequentColor.B);
+    }
+
+    public class ColorBgraEqualityComparer : IEqualityComparer<ColorBGRA>
+    {
+        public bool Equals(ColorBGRA x, ColorBGRA y)
+        {
+            return x.R == y.R && x.G == y.G && x.B == y.B && x.A == y.A;
+        }
+
+        public int GetHashCode(ColorBGRA obj)
+        {
+            return HashCode.Combine(obj.R, obj.G, obj.B, obj.A);
+        }
+    }
+    
     #endregion
 }
